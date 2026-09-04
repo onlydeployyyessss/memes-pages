@@ -1,14 +1,13 @@
 """End-to-end pipeline test with a real (generated) sample video."""
 import pytest
-
 from memes_shared.models import (
+    AccountSettings,
     Caption,
     ContentSource,
     DestinationAccount,
     DiscoveredContent,
     PublishingJob,
     Video,
-    AccountSettings,
 )
 
 

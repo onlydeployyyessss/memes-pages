@@ -1,7 +1,7 @@
 """Pydantic validation of AI responses — malformed output never crashes us."""
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 def _clamp(value: float, lo: float, hi: float) -> float:
@@ -47,5 +47,5 @@ def parse_trend_analysis(raw: dict) -> TrendAnalysis | None:
         return None
     try:
         return TrendAnalysis.model_validate(raw)
-    except Exception:  # noqa: BLE001 — any malformed shape → fallback
+    except Exception:
         return None

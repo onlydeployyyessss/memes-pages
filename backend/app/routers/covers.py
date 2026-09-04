@@ -5,13 +5,13 @@ import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from memes_shared.config import get_settings
+from memes_shared.models import DestinationAccount, ReelCover
 from PIL import Image
 from sqlalchemy.orm import Session
 
 from backend.app.deps import current_admin, get_db
 from backend.app.serializers import to_dict
-from memes_shared.config import get_settings
-from memes_shared.models import DestinationAccount, ReelCover
 
 router = APIRouter(dependencies=[Depends(current_admin)])
 
@@ -44,7 +44,7 @@ def upload_cover(file: UploadFile = File(...), name: str = "", db: Session = Dep
     try:
         with Image.open(dest) as im:
             width, height = im.size
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
     row = ReelCover(name=name or (file.filename or "cover"), file_path=str(dest),
                     file_size=size, width=width, height=height)

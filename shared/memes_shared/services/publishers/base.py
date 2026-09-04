@@ -44,7 +44,7 @@ def http_error_type(status_code: int, body: dict | str) -> str:
     text = str(body).lower()
     if status_code in (401, 403):
         return "auth"
-    if status_code == 429 or "rate limit" in text or "#4" in text and "application limit" in text:
+    if status_code == 429 or "rate limit" in text or ("#4" in text and "application limit" in text):
         return "rate_limit"
     if 500 <= status_code < 600:
         return "transient"

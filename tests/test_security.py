@@ -1,12 +1,11 @@
 """Security helper tests."""
 import jwt
 import pytest
-
 from memes_shared.security import (
     create_access_token,
     decode_token,
-    encrypt_credential,
     decrypt_credential,
+    encrypt_credential,
     hash_password,
     verify_password,
 )

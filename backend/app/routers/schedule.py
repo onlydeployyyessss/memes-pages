@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-
-from backend.app.deps import current_admin, get_db
 from memes_shared.models import DestinationAccount, PublishingJob
 from memes_shared.services.scheduler import schedule_queue
 from memes_shared.services.settings import get_setting, set_setting
+from sqlalchemy.orm import Session
+
+from backend.app.deps import current_admin, get_db
 
 router = APIRouter(dependencies=[Depends(current_admin)])
 

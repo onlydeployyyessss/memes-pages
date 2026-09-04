@@ -90,7 +90,7 @@ def status_summary(session: Session) -> dict:
             humanize_delta(now - datetime.fromisoformat(str(last_run)))
             if last_run else "never"
         )
-    except Exception:  # noqa: BLE001
+    except Exception:
         last_ago = "never"
     return {
         "enabled": bool(state.get("enabled")),

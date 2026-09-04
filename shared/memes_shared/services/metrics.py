@@ -55,7 +55,7 @@ def refresh_account_metrics(session: Session, account: DestinationAccount) -> di
 
         try:
             creds = json.loads(decrypt_credential(account.credentials_enc) or "{}")
-        except Exception:  # noqa: BLE001
+        except Exception:
             creds = {}
 
     if account.platform == "instagram" and creds.get("access_token"):
@@ -194,7 +194,7 @@ def refresh_all(session: Session) -> list[dict]:
     ).all():
         try:
             out.append(refresh_account_metrics(session, account))
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             log.exception("metrics refresh failed for account %s", account.id)
             out.append({"account_id": account.id, "error": str(e)[:200]})
     return out

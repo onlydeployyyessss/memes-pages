@@ -35,7 +35,7 @@ def get_engine():
     return _engine
 
 
-def SessionLocal() -> Session:  # noqa: N802 — callable session factory
+def SessionLocal() -> Session:
     get_engine()
     return _SessionFactory()
 

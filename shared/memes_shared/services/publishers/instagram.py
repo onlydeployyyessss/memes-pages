@@ -15,7 +15,7 @@ import httpx
 from memes_shared.config import get_settings
 from memes_shared.logging_setup import get_logger
 from memes_shared.models import DestinationAccount, PublishingJob
-from memes_shared.services.publishers.base import PublishResult, Publisher, http_error_type
+from memes_shared.services.publishers.base import Publisher, PublishResult
 
 log = get_logger("memes.publishers.instagram")
 
@@ -91,7 +91,7 @@ class InstagramPublisher(Publisher):
 def _json(resp: httpx.Response) -> dict:
     try:
         return resp.json()
-    except Exception:  # noqa: BLE001
+    except Exception:
         return {"raw": resp.text[:500]}
 
 

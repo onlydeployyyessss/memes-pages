@@ -12,12 +12,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared"))
 
-from memes_shared.config import get_settings  # noqa: E402
-from memes_shared.db.session import get_session  # noqa: E402
-from memes_shared.logging_setup import setup_logging  # noqa: E402
-from memes_shared.models import AdminUser  # noqa: E402
-from memes_shared.security import hash_password  # noqa: E402
-from memes_shared.services.settings import ensure_default_settings  # noqa: E402
+from memes_shared.config import get_settings
+from memes_shared.db.session import get_session
+from memes_shared.logging_setup import setup_logging
+from memes_shared.models import AdminUser
+from memes_shared.security import hash_password
+from memes_shared.services.settings import ensure_default_settings
 
 
 def main() -> None:

@@ -2,7 +2,6 @@
 import json
 
 import pytest
-
 from memes_shared.models import AIUsageLog
 from memes_shared.services.ai import (
     AIResponse,
@@ -88,7 +87,6 @@ def test_provider_parses_content_and_usage(monkeypatch):
 
 def test_provider_timeout(monkeypatch):
     import httpx
-
     import memes_shared.services.ai.openrouter as orp
 
     provider = OpenRouterProvider(api_key="sk-test", model="m", timeout=1)

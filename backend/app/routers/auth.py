@@ -4,15 +4,15 @@ from __future__ import annotations
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.orm import Session
-
-from backend.app.deps import current_admin, get_db, get_client_ip, require_role
-from backend.app.schemas import AdminCreateIn, LoginIn, PasswordChangeIn
-from backend.app.serializers import to_dict
+from fastapi.security import HTTPBearer
 from memes_shared.models import AdminUser, AuditLog
 from memes_shared.security import create_access_token, hash_password, verify_password
 from memes_shared.utils.timeutil import utcnow
+from sqlalchemy.orm import Session
+
+from backend.app.deps import current_admin, get_client_ip, get_db, require_role
+from backend.app.schemas import AdminCreateIn, LoginIn, PasswordChangeIn
+from backend.app.serializers import to_dict
 
 router = APIRouter()
 bearer = HTTPBearer(auto_error=False)

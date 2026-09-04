@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from memes_shared.models import Caption, CaptionTemplate, DestinationAccount
 from sqlalchemy.orm import Session
 
 from backend.app.deps import current_admin, get_db
 from backend.app.schemas import CaptionIn, CaptionTemplateIn
 from backend.app.serializers import to_dict
-from memes_shared.models import Caption, CaptionTemplate, DestinationAccount
 
 router = APIRouter(dependencies=[Depends(current_admin)])
 

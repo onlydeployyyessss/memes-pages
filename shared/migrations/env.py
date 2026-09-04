@@ -13,9 +13,9 @@ for p in (str(ROOT), str(ROOT / "shared")):
     if p not in sys.path:
         sys.path.insert(0, p)
 
+import memes_shared.models  # noqa: F401,E402  (register all tables)
 from memes_shared.config import get_settings  # noqa: E402
 from memes_shared.db.base import Base  # noqa: E402
-import memes_shared.models  # noqa: F401,E402  (register all tables)
 
 config = context.config
 

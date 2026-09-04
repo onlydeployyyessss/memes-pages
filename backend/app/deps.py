@@ -8,10 +8,9 @@ from collections.abc import Iterator
 import jwt as pyjwt
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.orm import Session
-
 from memes_shared.db.session import SessionLocal
 from memes_shared.models import AdminUser
+from sqlalchemy.orm import Session
 
 bearer_scheme = HTTPBearer(auto_error=False)
 

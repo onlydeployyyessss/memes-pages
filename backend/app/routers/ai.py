@@ -7,14 +7,14 @@ logged, and never sent to the frontend.
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from memes_shared.config import get_settings
+from memes_shared.models import AIUsageLog, ContentSource, DiscoveredContent
+from memes_shared.services.ai import get_ai
+from memes_shared.services.settings import get_setting, set_setting
 from sqlalchemy.orm import Session
 
 from backend.app.deps import current_admin, get_db
 from backend.app.serializers import rows_to_dicts
-from memes_shared.config import get_settings
-from memes_shared.models import AIUsageLog, DiscoveredContent, ContentSource
-from memes_shared.services.ai import get_ai
-from memes_shared.services.settings import get_setting, set_setting
 
 router = APIRouter(dependencies=[Depends(current_admin)])
 

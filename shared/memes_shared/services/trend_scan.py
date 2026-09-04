@@ -1,7 +1,7 @@
 """Trend Hunter orchestration: score → rules → pipeline (no manual approval)."""
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -17,8 +17,8 @@ from memes_shared.models import (
 )
 from memes_shared.services import rule_engine, trend_engine
 from memes_shared.services.ai import get_ai
-from memes_shared.services.settings import get_setting
 from memes_shared.services.notifier import notify_admins
+from memes_shared.services.settings import get_setting
 from memes_shared.utils.timeutil import utcnow
 
 log = get_logger("memes.trendhunter")
@@ -135,7 +135,7 @@ def run_trend_scan(session: Session, limit: int = 50) -> dict:
                             max(deterministic_score - max_adj,
                                 min(deterministic_score + max_adj, blended)), 1)
                         ai_data["deterministic_score"] = deterministic_score
-            except Exception as e:  # noqa: BLE001 — AI failure must never crash scoring
+            except Exception as e:
                 log.warning("AI trend analysis failed for #%s: %s", content.id, e)
         if ai_data is not None:
             breakdown["ai"] = ai_data

@@ -1,7 +1,7 @@
 """Caption & caption-template models."""
 from __future__ import annotations
 
-from sqlalchemy import Boolean, JSON, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from memes_shared.db.base import Base, BaseMixin

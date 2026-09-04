@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from memes_shared.models import ContentSource, RssFeed
+from memes_shared.services.discovery import discover_source
 from sqlalchemy.orm import Session
 
 from backend.app.deps import current_admin, get_db
 from backend.app.schemas import FeedIn
 from backend.app.serializers import to_dict
-from memes_shared.models import ContentSource, RssFeed
-from memes_shared.services.discovery import discover_source
 
 router = APIRouter(dependencies=[Depends(current_admin)])
 

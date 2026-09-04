@@ -4,18 +4,18 @@ from __future__ import annotations
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import func
-from sqlalchemy.orm import Session
-
-from backend.app.deps import current_admin, get_db
 from memes_shared.models import (
     DailyMetric,
     DestinationAccount,
     DiscoveredContent,
-    PublishingJob,
     PublishingHistory,
+    PublishingJob,
     TrendScore,
 )
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from backend.app.deps import current_admin, get_db
 
 router = APIRouter(dependencies=[Depends(current_admin)])
 

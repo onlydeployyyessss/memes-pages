@@ -13,10 +13,10 @@ import sys
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
-
 from memes_shared.db.session import get_session
 from memes_shared.logging_setup import get_logger, setup_logging
-from memes_shared.services import automation, reports as reports_svc
+from memes_shared.services import automation
+from memes_shared.services import reports as reports_svc
 from memes_shared.services.discovery import run_discovery_cycle
 from memes_shared.services.metrics import refresh_all
 from memes_shared.services.pipeline import process_pending
@@ -114,8 +114,6 @@ def job_cleanup():
     """Remove temp files older than 12h + prune AI usage logs older than 30d."""
     from datetime import timedelta
 
-    from pathlib import Path
-
     from memes_shared.config import get_settings
     from memes_shared.models import AIUsageLog
 
@@ -175,7 +173,7 @@ def main() -> None:
     scheduler.add_job(job_cleanup, CronTrigger(hour=4, minute=30), id="cleanup",
                       max_instances=1, coalesce=True)
 
-    def _shutdown(signum, frame):  # noqa: ANN001
+    def _shutdown(signum, frame):
         log.info("worker stopping (signal %s)…", signum)
         scheduler.shutdown(wait=False)
         sys.exit(0)

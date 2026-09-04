@@ -35,7 +35,6 @@ from memes_shared.logging_setup import get_logger
 from memes_shared.models import ContentSource, RssFeed
 from memes_shared.services.discovery.authorized_feed_provider import _coerce_item
 from memes_shared.services.discovery.base import (
-    DiscoveryItem,
     DiscoveryProvider,
     DiscoveryUnavailable,
 )
@@ -58,14 +57,14 @@ class AgentReachProvider(DiscoveryProvider):
             enabled = enabled or bool(
                 settings_svc.DEFAULT_SETTINGS["discovery"]["agent_reach_enabled"]
             )
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
         return source_type == "agent_reach" and enabled
 
     # ── Availability probing ─────────────────────────────────────────
     def probe(self, force: bool = False) -> dict:
         """Return {'available': bool, 'report': <doctor --json output>}."""
-        from datetime import datetime, timedelta
+        from datetime import timedelta
 
         now = utcnow()
         if (

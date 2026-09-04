@@ -30,7 +30,6 @@ from memes_shared.services.ai.prompts import (
     caption_user_prompt,
     category_user_prompt,
     hashtag_user_prompt,
-    language_user_prompt,
     report_user_prompt,
     trend_user_prompt,
 )
@@ -127,7 +126,7 @@ class AIService:
                 response = self.provider.chat(system=system, user=user,
                                               max_tokens=max_tokens,
                                               temperature=temperature)
-            except Exception as e:  # noqa: BLE001 — provider bugs must not crash us
+            except Exception as e:
                 from memes_shared.services.ai.base import AIResponse
 
                 response = AIResponse(ok=False, error=f"provider exception: {e}"[:400],

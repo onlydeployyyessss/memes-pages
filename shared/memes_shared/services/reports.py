@@ -151,7 +151,7 @@ def generate_report(session: Session, report_type: str, account_id: int | None =
             ai_summary = ai.summarize_report(text, d)
             if ai_summary:
                 text = f"{text}\n\n{ai_summary}"
-    except Exception as e:  # noqa: BLE001 — reports work without AI
+    except Exception as e:
         log.warning("AI report summary failed: %s", e)
     report = Report(
         report_type=report_type,

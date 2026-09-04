@@ -1,6 +1,5 @@
 """Duplicate detection tests (requires ffmpeg for phash paths)."""
 import pytest
-
 from memes_shared.services import dedup
 
 

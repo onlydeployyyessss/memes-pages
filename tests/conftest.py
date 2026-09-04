@@ -23,7 +23,7 @@ os.environ["MEMES_SECRET_KEY"] = "test-secret-key-0123456789abcdef-memes"
 os.environ["MEMES_BOT_TOKEN"] = ""
 
 from memes_shared.db.base import Base  # noqa: E402
-import memes_shared.models  # noqa: F402,E402
+import memes_shared.models  # noqa: F401,E402 — side-effect: registers all models on Base
 from memes_shared.db.session import create_engine_and_session  # noqa: E402
 
 _engine, _Session = create_engine_and_session()

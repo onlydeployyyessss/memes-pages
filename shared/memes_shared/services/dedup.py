@@ -56,7 +56,7 @@ def extract_frame_hashes(video_path: str | Path, max_frames: int = 5) -> list[st
         for f in sorted(Path(td).glob("frame_*.jpg"))[:max_frames]:
             try:
                 hashes.append(_average_hash(Image.open(f)))
-            except Exception:  # noqa: BLE001
+            except Exception:
                 continue
     return hashes
 
@@ -140,7 +140,7 @@ def check_media(
         exact = session.query(VideoHash).filter(VideoHash.sha256 == sha256).first()
         if exact is not None:
             video = session.get(Video, exact.video_id)
-            res.add(f"identical file already stored (sha256)", video.content_id if video else None)
+            res.add("identical file already stored (sha256)", video.content_id if video else None)
             return res
 
     phash_frames = phash_frames or []
@@ -155,7 +155,7 @@ def check_media(
         for row in rows:
             try:
                 existing_frames = [f for f in row.phash.split(":") if f]
-            except Exception:  # noqa: BLE001
+            except Exception:
                 continue
             if frames_similar(phash_frames, existing_frames):
                 video = session.get(Video, row.video_id)

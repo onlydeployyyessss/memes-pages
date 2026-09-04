@@ -6,9 +6,6 @@ Content Queue → (multi-account publishing jobs)
 """
 from __future__ import annotations
 
-import uuid
-from pathlib import Path
-
 from sqlalchemy.orm import Session
 
 from memes_shared.config import get_settings
@@ -20,8 +17,9 @@ from memes_shared.models import (
     Video,
     VideoHash,
 )
-from memes_shared.services import dedup, media as media_svc, video as video_svc
-from memes_shared.services.settings import get_setting
+from memes_shared.services import dedup
+from memes_shared.services import media as media_svc
+from memes_shared.services import video as video_svc
 from memes_shared.utils.timeutil import utcnow
 
 log = get_logger("memes.pipeline")
@@ -97,7 +95,7 @@ def process_content(session: Session, content: DiscoveredContent) -> str:
         frame_hashes: list[str] = []
         try:
             frame_hashes = dedup.extract_frame_hashes(original)
-        except Exception as e:  # noqa: BLE001 — dedup must not block pipeline
+        except Exception as e:
             log.warning("phash extraction failed for #%s: %s", content.id, e)
         dup = dedup.check_media(session, sha256=sha, phash_frames=frame_hashes)
         if dup.is_duplicate:
@@ -112,7 +110,7 @@ def process_content(session: Session, content: DiscoveredContent) -> str:
         cover_path = ""
         try:
             cover_path = str(video_svc.extract_cover(normalized, cover_dir))
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             log.warning("cover extraction failed for #%s: %s", content.id, e)
 
         # ── 8. Persist video + hashes + metadata ──────────────────────

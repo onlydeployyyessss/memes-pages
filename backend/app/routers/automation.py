@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
+from memes_shared.models import AuditLog
+from memes_shared.services import automation
 from sqlalchemy.orm import Session
 
 from backend.app.deps import current_admin, get_db
-from memes_shared.models import AuditLog
-from memes_shared.services import automation
 
 router = APIRouter(dependencies=[Depends(current_admin)])
 

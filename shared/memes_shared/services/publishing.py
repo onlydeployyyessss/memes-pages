@@ -21,8 +21,8 @@ from memes_shared.models import (
     Video,
 )
 from memes_shared.services.captions import build_caption, pick_template
-from memes_shared.services.settings import get_setting
 from memes_shared.services.notifier import notify_admins
+from memes_shared.services.settings import get_setting
 from memes_shared.utils.timeutil import utcnow
 
 log = get_logger("memes.publishing")
@@ -52,7 +52,7 @@ def resolve_caption(session: Session, account: DestinationAccount, content: Disc
                 )
                 if captions:
                     return captions[0], None
-        except Exception as e:  # noqa: BLE001 — AI captions are best-effort
+        except Exception as e:
             log.warning("AI caption failed for account %s: %s", account.id, e)
         # fall through to configured caption modes on any failure
 
@@ -152,8 +152,8 @@ def create_jobs_for_content(session: Session, content: DiscoveredContent, video:
 # ── Dispatch loop ────────────────────────────────────────────────────
 def dispatch_due_jobs(session: Session, limit: int = 20, force_job_ids: list[int] | None = None) -> dict:
     """Publish all due jobs. Respects automation gate unless forced."""
-    from memes_shared.services.publishers import get_publisher
     from memes_shared.security import decrypt_credential
+    from memes_shared.services.publishers import get_publisher
 
     pub_cfg = get_setting(session, "publishing")
     mode = pub_cfg.get("mode", "dry_run")
@@ -201,7 +201,7 @@ def dispatch_due_jobs(session: Session, limit: int = 20, force_job_ids: list[int
         creds_json = decrypt_credential(account.credentials_enc) if account.credentials_enc else "{}"
         try:
             creds = json.loads(creds_json or "{}")
-        except Exception:  # noqa: BLE001
+        except Exception:
             creds = {}
 
         effective_mode = mode

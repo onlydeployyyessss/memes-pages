@@ -5,4 +5,4 @@ from memes_shared.utils.timeutil import (
     utcnow,
 )
 
-__all__ = ["utcnow", "parse_iso", "humanize_delta", "in_quiet_hours"]
+__all__ = ["humanize_delta", "in_quiet_hours", "parse_iso", "utcnow"]

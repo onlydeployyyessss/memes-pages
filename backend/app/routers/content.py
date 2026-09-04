@@ -5,13 +5,13 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from memes_shared.config import get_settings
+from memes_shared.models import DiscoveredContent, TrendScore, Video
+from memes_shared.services.pipeline import process_content
 from sqlalchemy.orm import Session
 
 from backend.app.deps import current_admin, get_db
 from backend.app.serializers import rows_to_dicts, to_dict
-from memes_shared.config import get_settings
-from memes_shared.models import DiscoveredContent, TrendScore, Video
-from memes_shared.services.pipeline import process_content
 
 router = APIRouter(dependencies=[Depends(current_admin)])
 
@@ -59,12 +59,12 @@ def _process_local_video(db: Session, content: DiscoveredContent, local_path: st
     Returns (Video | None, error string). On success the content row gets its
     publishing jobs created by the caller.
     """
+    import hashlib
     from pathlib import Path as _Path
 
-    import hashlib
-
     from memes_shared.models import VideoHash
-    from memes_shared.services import dedup, video as video_svc
+    from memes_shared.services import dedup
+    from memes_shared.services import video as video_svc
 
     cfg = get_settings()
     src = _Path(local_path)
@@ -84,7 +84,7 @@ def _process_local_video(db: Session, content: DiscoveredContent, local_path: st
         cover = ""
         try:
             cover = str(video_svc.extract_cover(normalized, cfg.media_path / "covers"))
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
         video = Video(
             content_id=content.id, file_path=str(normalized), original_path=str(src),
@@ -100,7 +100,7 @@ def _process_local_video(db: Session, content: DiscoveredContent, local_path: st
             source_url_hash=hashlib.sha256(content.url.encode()).hexdigest(),
         ))
         return video, ""
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         content.status = "failed"
         content.error = str(e)[:1000]
         return None, content.error

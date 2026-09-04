@@ -2,10 +2,6 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-
-from backend.app.deps import current_admin, get_db
-from backend.app.serializers import to_dict
 from memes_shared.models import (
     AnalyticsEvent,
     ContentSource,
@@ -13,6 +9,10 @@ from memes_shared.models import (
     PublishingHistory,
     TrendScore,
 )
+from sqlalchemy.orm import Session
+
+from backend.app.deps import current_admin, get_db
+from backend.app.serializers import to_dict
 
 router = APIRouter(dependencies=[Depends(current_admin)])
 

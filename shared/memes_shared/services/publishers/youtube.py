@@ -9,7 +9,7 @@ import httpx
 
 from memes_shared.logging_setup import get_logger
 from memes_shared.models import DestinationAccount, PublishingJob
-from memes_shared.services.publishers.base import PublishResult, Publisher, http_error_type
+from memes_shared.services.publishers.base import Publisher, PublishResult, http_error_type
 
 log = get_logger("memes.publishers.youtube")
 

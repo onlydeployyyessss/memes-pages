@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from memes_shared.models import DestinationAccount, PublishingBatch, PublishingJob
+from memes_shared.models import PublishingBatch, PublishingJob
 from memes_shared.services.settings import get_setting
 from memes_shared.utils.timeutil import get_tzinfo, in_quiet_hours, utcnow
 

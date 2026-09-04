@@ -171,15 +171,15 @@ def run_discovery_cycle(session: Session) -> dict:
 
 
 __all__ = [
+    "PROVIDERS",
+    "AgentReachProvider",
+    "AuthorizedFeedProvider",
+    "DiscoveryError",
     "DiscoveryItem",
     "DiscoveryProvider",
-    "DiscoveryError",
     "DiscoveryUnavailable",
     "RSSProvider",
-    "AuthorizedFeedProvider",
-    "AgentReachProvider",
-    "PROVIDERS",
-    "get_provider",
     "discover_source",
+    "get_provider",
     "run_discovery_cycle",
 ]

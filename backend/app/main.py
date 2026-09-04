@@ -2,14 +2,12 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-
 from memes_shared.config import get_settings
 from memes_shared.logging_setup import get_logger, setup_logging
 
@@ -103,7 +101,7 @@ def create_app() -> FastAPI:
                     severity="error",
                 ))
                 s.commit()
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
         return JSONResponse({"detail": "internal server error"},
                             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -116,8 +114,22 @@ def create_app() -> FastAPI:
 
     # ── Routers ──────────────────────────────────────────────────────
     from backend.app.routers import (
-        accounts, ai, analytics, audit, auth, automation, captions, content,
-        covers, feeds, health, queue, reports, schedule, settings, sources,
+        accounts,
+        ai,
+        analytics,
+        audit,
+        auth,
+        automation,
+        captions,
+        content,
+        covers,
+        feeds,
+        health,
+        queue,
+        reports,
+        schedule,
+        settings,
+        sources,
         trending,
     )
 
