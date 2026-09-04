@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import random
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 PLACEHOLDER_RE = re.compile(r"\{(\w+)\}")
 
@@ -49,7 +49,7 @@ def build_caption(
     Modes: default → default caption row; template → rendered template
     (random selection happens upstream); custom → free text.
     """
-    ctx = {"date": datetime.utcnow().strftime("%Y-%m-%d"), **(context or {})}
+    ctx = {"date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), **(context or {})}
     if mode == "custom" and custom_text:
         base = render_template(custom_text, ctx)
     elif mode == "template" and template_row is not None:

@@ -50,6 +50,7 @@ def process_content(session: Session, content: DiscoveredContent) -> str:
     tmp_dir = settings_media / "tmp"
     store_dir = settings_media / "videos"
     cover_dir = settings_media / "covers"
+    tmp_dir.mkdir(parents=True, exist_ok=True)
     try:
         # ── 1. Validate source ────────────────────────────────────────
         source = session.get(ContentSource, content.source_id) if content.source_id else None
@@ -115,6 +116,7 @@ def process_content(session: Session, content: DiscoveredContent) -> str:
             log.warning("cover extraction failed for #%s: %s", content.id, e)
 
         # ── 8. Persist video + hashes + metadata ──────────────────────
+        store_dir.mkdir(parents=True, exist_ok=True)
         final_path = store_dir / normalized.name
         normalized.replace(final_path)
         original.unlink(missing_ok=True)

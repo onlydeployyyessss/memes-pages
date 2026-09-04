@@ -1,0 +1,4 @@
+{
+  "build": { "dockerfile": "../docker/Dockerfile.python" },
+  "deploy": { "startCommand": "python -m worker.main", "restartPolicyType": "ON_FAILURE" }
+}

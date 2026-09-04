@@ -1,0 +1,4 @@
+{
+  "build": { "dockerfile": "../docker/Dockerfile.frontend" },
+  "deploy": { "startCommand": "node server.js", "restartPolicyType": "ON_FAILURE" }
+}

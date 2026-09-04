@@ -138,12 +138,16 @@ def dispatch_due_jobs(session: Session, limit: int = 20, force_job_ids: list[int
     now = utcnow()
 
     query = session.query(PublishingJob).filter(
-        PublishingJob.status.in_(["queued", "scheduled"]),
-        (PublishingJob.publish_at.is_(None)) | (PublishingJob.publish_at <= now),
-        (PublishingJob.next_retry_at.is_(None)) | (PublishingJob.next_retry_at <= now),
+        PublishingJob.status.in_(["queued", "scheduled"])
     )
     if force_job_ids:
+        # forced dispatch ignores due/retry timing (manual "publish now")
         query = query.filter(PublishingJob.id.in_(force_job_ids))
+    else:
+        query = query.filter(
+            (PublishingJob.publish_at.is_(None)) | (PublishingJob.publish_at <= now),
+            (PublishingJob.next_retry_at.is_(None)) | (PublishingJob.next_retry_at <= now),
+        )
     jobs = query.order_by(PublishingJob.priority, PublishingJob.publish_at).limit(limit).all()
 
     if not force_job_ids:
@@ -313,6 +317,7 @@ def _update_batch_counters(session: Session, job: PublishingJob, success: bool) 
 def _maybe_content_published(session: Session, content_id: int | None) -> None:
     if content_id is None:
         return
+    session.flush()  # ensure pending job status changes are visible to the count
     content = session.get(DiscoveredContent, content_id)
     if content is None:
         return

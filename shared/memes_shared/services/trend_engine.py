@@ -14,6 +14,13 @@ from memes_shared.utils.timeutil import utcnow
 
 ENGINE_VERSION = "v1"
 
+# Fallback when no trend settings are provided (tests / CLI use)
+DEFAULT_WEIGHTS = {
+    "views": 0.18, "likes": 0.13, "comments": 0.08, "shares": 0.10,
+    "engagement_rate": 0.08, "growth_rate": 0.16, "velocity": 0.07,
+    "freshness": 0.15, "source_history": 0.05,
+}
+
 
 def _clamp01(x: float) -> float:
     return max(0.0, min(1.0, x))
@@ -33,7 +40,7 @@ def compute_trend_score(
     history: optional [{"engagement":float,"captured_at":iso}, ...] oldest→newest
     """
     cfg = {**{}, **(trend_cfg or {})}
-    weights = cfg.get("weights", {})
+    weights = cfg.get("weights") or DEFAULT_WEIGHTS
     views = float(metrics.get("views") or 0)
     likes = float(metrics.get("likes") or 0)
     comments = float(metrics.get("comments") or 0)

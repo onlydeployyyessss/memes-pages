@@ -1,0 +1,8 @@
+{
+  "build": { "dockerfile": "../docker/Dockerfile.python" },
+  "deploy": {
+    "startCommand": "sh -c 'alembic -c shared/alembic.ini upgrade head && python -m scripts.seed_admin && uvicorn app.main:app --host 0.0.0.0 --port 8000 --app-dir backend'",
+    "healthcheckPath": "/api/v1/health",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}

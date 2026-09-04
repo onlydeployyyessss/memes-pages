@@ -88,6 +88,10 @@ class DuplicateCheckResult:
     reasons: list[str] = field(default_factory=list)
     matched_content_id: int | None = None
 
+    @property
+    def reason_text(self) -> str:
+        return "; ".join(self.reasons) if self.reasons else "duplicate"
+
     def add(self, reason: str, content_id: int | None = None) -> None:
         self.is_duplicate = True
         self.reasons.append(reason)

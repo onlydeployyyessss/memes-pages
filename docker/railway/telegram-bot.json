@@ -1,0 +1,4 @@
+{
+  "build": { "dockerfile": "../docker/Dockerfile.python" },
+  "deploy": { "startCommand": "python -m telegram_bot.bot", "restartPolicyType": "ON_FAILURE" }
+}
