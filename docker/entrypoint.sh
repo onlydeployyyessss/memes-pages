@@ -11,9 +11,11 @@ ROLE="${ROLE:-api}"
 
 case "$ROLE" in
   worker)
+    alembic -c shared/alembic.ini upgrade head
     exec python -m worker.main
     ;;
   telegram-bot)
+    alembic -c shared/alembic.ini upgrade head
     exec python -m telegram_bot.bot
     ;;
   *)
