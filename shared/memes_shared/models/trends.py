@@ -22,7 +22,7 @@ class TrendScore(Base, BaseMixin):
     engine_version: Mapped[str] = mapped_column(String(20), default="v1")
     computed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    content: Mapped["DiscoveredContent | None"] = relationship(viewonly=True)
+    content: Mapped["DiscoveredContent | None"] = relationship(viewonly=True)  # noqa: F821 — registry-resolved
 
 
 class TrendHistory(Base, BaseMixin):

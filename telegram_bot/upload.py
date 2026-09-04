@@ -8,11 +8,11 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
-
 from memes_shared.config import get_settings
 from memes_shared.db.session import get_session
-from memes_shared.models import DestinationAccount, DiscoveredContent, PublishingJob
-from memes_shared.services.publishing import create_jobs_for_content, dispatch_due_jobs
+from memes_shared.models import DestinationAccount, DiscoveredContent
+from memes_shared.services.publishing import dispatch_due_jobs
+
 from telegram_bot.formatting import truncate
 from telegram_bot.guards import is_authorized
 from telegram_bot.keyboards import UploadCB, upload_accounts_kb, upload_when_kb

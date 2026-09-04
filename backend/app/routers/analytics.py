@@ -168,7 +168,7 @@ def trending_performance(limit: int = 20, db: Session = Depends(get_db)):
     )
     items = []
     seen = set()
-    for content, ts, hist in rows:
+    for content, ts, _hist in rows:
         if content.id in seen:
             continue
         seen.add(content.id)

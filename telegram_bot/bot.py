@@ -15,7 +15,6 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
-
 from memes_shared.config import get_settings
 from memes_shared.logging_setup import get_logger, setup_logging
 
@@ -46,7 +45,6 @@ async def run_webhook(bot: Bot, dp: Dispatcher, base_url: str, secret: str) -> N
         SimpleRequestHandler,
         setup_application,
     )
-
     from aiohttp import web
 
     path = "/telegram/webhook"

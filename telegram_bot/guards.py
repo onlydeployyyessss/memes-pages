@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from aiogram.types import Message
-
 from memes_shared.config import get_settings
 from memes_shared.db.session import get_session
 from memes_shared.models import User

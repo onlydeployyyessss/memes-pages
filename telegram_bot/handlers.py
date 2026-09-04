@@ -6,8 +6,6 @@ from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
-from sqlalchemy import func
-
 from memes_shared.db.session import get_session
 from memes_shared.models import (
     Caption,
@@ -20,17 +18,17 @@ from memes_shared.models import (
 )
 from memes_shared.services import automation as automation_svc
 from memes_shared.services.settings import get_setting
-from telegram_bot.formatting import ago, fmt_int, st, truncate, trend_line
+from sqlalchemy import func
+
+from telegram_bot.formatting import ago, fmt_int, st, trend_line, truncate
 from telegram_bot.guards import is_authorized, register_or_update
 from telegram_bot.keyboards import (
     AccCB,
     SecCB,
     TrendCB,
-    account_kb,
     automation_kb,
     main_menu,
     section_home,
-    trending_kb,
 )
 
 router = Router(name="sections")
@@ -129,7 +127,6 @@ async def show_dashboard(message: Message, edit: bool = False):
         published = s.query(PublishingJob).filter(PublishingJob.status == "published").count()
         failed = s.query(PublishingJob).filter(PublishingJob.status == "failed").count()
         followers = s.query(func.coalesce(func.sum(DestinationAccount.followers_count), 0)).scalar()
-        views = s.query(func.coalesce(func.sum(PublishingJob.id), 0)).filter(PublishingJob.status == "published").scalar()
         state = automation_svc.status_summary(s)
         sources = s.query(ContentSource).filter(ContentSource.authorization == "authorized").count()
     text = (
@@ -236,7 +233,7 @@ async def show_trending(message: Message, edit: bool = False):
         from aiogram.utils.keyboard import InlineKeyboardBuilder
 
         builder = InlineKeyboardBuilder()
-        for content, ts, source in rows[:5]:
+        for content, ts, _source in rows[:5]:
             builder.button(text=f"⚡ {ts.score:.0f} — {truncate(content.title, 22)}",
                            callback_data=TrendCB(action="preview", content_id=content.id).pack())
         builder.adjust(1)
@@ -493,6 +490,6 @@ async def _send(message: Message, text: str, keyboard, edit: bool):
         try:
             await message.edit_text(text, reply_markup=keyboard)
             return
-        except Exception:  # noqa: BLE001 — message identical / too old
+        except Exception:
             pass
     await message.answer(text, reply_markup=keyboard)

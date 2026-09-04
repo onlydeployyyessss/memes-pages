@@ -36,8 +36,8 @@ class PublishingJob(Base, BaseMixin):
     next_retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_error: Mapped[str] = mapped_column(Text, default="")
 
-    content: Mapped["DiscoveredContent | None"] = relationship(viewonly=True)
-    account: Mapped["DestinationAccount | None"] = relationship(viewonly=True)
+    content: Mapped["DiscoveredContent | None"] = relationship(viewonly=True)  # noqa: F821 — registry-resolved at mapper config
+    account: Mapped["DestinationAccount | None"] = relationship(viewonly=True)  # noqa: F821 — registry-resolved
     history: Mapped[list["PublishingHistory"]] = relationship(viewonly=True)
 
 

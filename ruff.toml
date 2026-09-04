@@ -8,8 +8,20 @@ ignore = [
   "S101",  # assert in tests
   "S106",  # hardcoded test credentials
   "B904",  # raise-from in except: HTTPException re-raises are fine as-is
+  "B905",  # zip strict — style preference
+  "S311",  # random for demo/sample data is fine
+  "S105",  # default bootstrap creds via env fallback
+  "S603",  # subprocess with fixed argv (ffprobe/ffmpeg/agent-reach)
+  "S110",  # best-effort try/except-pass in cleanup loops
+  "S112",  # best-effort try/except-continue in scan loops
+  "S104",  # 0.0.0.0 binding is required in containers
+  "RUF001",  # en-dashes/emoji are intentional in user-facing strings
+  "RUF022",  # __all__ grouping over strict sorting
+  "RUF012",  # mutable class-level defaults (pydantic settings)
   "E501",  # long lines handled by formatter taste
 ]
 
 [lint.per-file-ignores]
 "tests/*" = ["RUF059", "F841", "S", "E501"]
+"scripts/*" = ["E402"]  # sys.path bootstrap before imports
+"alembic/ *" = ["E402"]

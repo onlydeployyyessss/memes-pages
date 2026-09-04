@@ -49,4 +49,4 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install ruff==0.16.6
-      - run: ruff check shared backend worker telegram-bot scripts tests
+      - run: ruff check shared backend worker telegram_bot scripts tests

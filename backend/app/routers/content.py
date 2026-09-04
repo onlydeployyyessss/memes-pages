@@ -161,7 +161,7 @@ def upload_video(
     )
     db.add(TrendScore(content_id=content.id, score=score, signals=breakdown))
 
-    video, error = _process_local_video(db, content, str(dest))
+    video, _error = _process_local_video(db, content, str(dest))
     if video is not None:
         from memes_shared.services.publishing import create_jobs_for_content
 

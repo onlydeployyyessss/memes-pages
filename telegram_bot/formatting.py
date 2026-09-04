@@ -1,7 +1,7 @@
 """Formatting helpers for bot messages."""
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from memes_shared.utils.timeutil import humanize_delta, utcnow
 

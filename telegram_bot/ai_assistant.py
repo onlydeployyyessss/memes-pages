@@ -14,13 +14,13 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
-
 from memes_shared.db.session import get_session
 from memes_shared.models import DestinationAccount, DiscoveredContent, PublishingJob, TrendScore
 from memes_shared.services.ai import get_ai
 from memes_shared.services.reports import collect_period
 from memes_shared.services.settings import get_setting
 from memes_shared.utils.timeutil import utcnow
+
 from telegram_bot.formatting import truncate
 from telegram_bot.guards import is_authorized
 from telegram_bot.keyboards import main_menu

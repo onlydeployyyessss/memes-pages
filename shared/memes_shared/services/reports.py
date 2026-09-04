@@ -175,8 +175,7 @@ def generate_report(session: Session, report_type: str, account_id: int | None =
 
 def scheduled_reports(session: Session) -> list[str]:
     """Run due daily/weekly/monthly reports (called by worker cron)."""
-    cfg = get_setting(session, "notifications")
-    produced = []
+    produced = []  # notification preferences are applied inside the send paths
     for rtype in ("daily", "weekly", "monthly"):
         latest = (
             session.query(Report)

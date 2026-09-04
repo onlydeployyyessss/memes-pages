@@ -124,10 +124,9 @@ def eligible_accounts(session: Session, content: DiscoveredContent) -> list[Dest
 def create_jobs_for_content(session: Session, content: DiscoveredContent, video: Video | None) -> list[PublishingJob]:
     accounts = eligible_accounts(session, content)
     jobs: list[PublishingJob] = []
-    delay_min = 0
     for account in accounts:
         dist = (account.settings.distribution if account.settings else None) or {}
-        account_delay = int(dist.get("publish_delay_minutes", 0) or 0)
+        dist.get("publish_delay_minutes", 0)  # per-account stagger handled by schedule_queue
         text, caption_id = resolve_caption(session, account, content)
         cover_id = resolve_cover(session, account)
         job = PublishingJob(

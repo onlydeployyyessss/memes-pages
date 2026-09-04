@@ -6,7 +6,8 @@ from datetime import timedelta
 from sqlalchemy.orm import Session
 
 from memes_shared.logging_setup import get_logger
-from memes_shared.models import AutomationLog, ContentSource, DiscoveredContent, RssFeed
+from memes_shared.models import AutomationLog, ContentSource, DiscoveredContent
+from memes_shared.models import RssFeed as RssFeed  # re-exported
 from memes_shared.services.discovery.agent_reach_provider import AgentReachProvider
 from memes_shared.services.discovery.authorized_feed_provider import AuthorizedFeedProvider
 from memes_shared.services.discovery.base import (
