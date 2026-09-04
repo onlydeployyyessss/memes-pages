@@ -13,22 +13,20 @@ jobs:
       matrix:
         include:
           - service: api
+            id: 13195bc6-b9dd-4792-a47c-042d47a26fce
           - service: worker
+            id: 2d2ec68d-535d-4661-81ff-f12de6dd9bb2
           - service: dashboard
+            id: a7161797-40ab-4152-9f15-2b5a3be8f65b
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli@4
-      - name: Deploy ${{ matrix.service }}
+      - name: Trigger Railway deploy (${{ matrix.service }})
         run: |
-          railway up \
-            --project 613a56d9-bfe8-45e6-bade-20cbd391d780 \
-            --environment dafb3dfa-842f-450d-9fce-82dbc85d202d \
-            --service ${{ matrix.service }} \
-            --ci \
-            --message "deploy ${GITHUB_SHA::7}"
+          curl -sf -X POST https://backboard.railway.com/graphql/v2 \
+            -H "Authorization: Bearer $RAILWAY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: memes-pages-ci/1.0" \
+            -d "{\"query\":\"mutation { serviceInstanceDeploy(environmentId: \\\"$ENV_ID\\\", serviceId: \\\"${{ matrix.id }}\\\", latestCommit: true) }\"}" \
+            | tee /dev/stderr | grep -q '"serviceInstanceDeploy":true'
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          ENV_ID: bb13c36d-1f07-46a0-b7f4-0415d6c10fd4
