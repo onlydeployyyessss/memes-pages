@@ -7,6 +7,7 @@ ignore = [
   "B008",  # Depends() in defaults — idiomatic FastAPI
   "S101",  # assert in tests
   "S106",  # hardcoded test credentials
+  "B904",  # raise-from in except: HTTPException re-raises are fine as-is
   "E501",  # long lines handled by formatter taste
 ]
 
