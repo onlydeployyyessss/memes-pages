@@ -27,6 +27,10 @@ class SessionImportIn(BaseModel):
     sessionid: str = Field(min_length=20, max_length=600)
 
 
+class GraphTokenIn(BaseModel):
+    token: str = Field(min_length=40, max_length=800)
+
+
 class LoginIn(BaseModel):
     username: str = Field(min_length=1, max_length=60)
     password: str = Field(min_length=1, max_length=200)
@@ -63,6 +67,12 @@ def session_import(body: SessionImportIn):
     except ValueError as e:
         raise HTTPException(400, str(e)) from None
     return {"ok": True, **res, "message": "session imported from your browser — reused automatically"}
+
+
+@router.post("/graph-token")
+def graph_token_save_ep(body: GraphTokenIn):
+    svc.graph_token_save(body.token)
+    return {"ok": True, "message": "Graph token stored encrypted — instaloader 429s now fall back to official business_discovery"}
 
 
 @router.get("/status")

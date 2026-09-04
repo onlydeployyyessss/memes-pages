@@ -33,6 +33,7 @@ DEFAULT_SLEEP_S = 8.0
 DEFAULT_DEADLINE_S = 900
 WATCHLIST_KEY = "instaloader_watchlist"
 SESSION_KEY_PREFIX = "instaloader_session_"
+GRAPH_TOKEN_KEY = "instaloader_graph_token"
 
 
 # ── Sessions (DB-backed, encrypted) ─────────────────────────────────────
@@ -155,7 +156,77 @@ def _base_loader(instaloader):
     )
 
 
-def collect_posts(profile: str, limit: int) -> list[dict]:
+def graph_token_set() -> bool:
+    with _db_session() as db:
+        from memes_shared.models import AppSetting
+
+        return db.get(AppSetting, GRAPH_TOKEN_KEY) is not None
+
+
+def graph_token_save(token: str) -> None:
+    with _db_session() as db:
+        set_setting(db, GRAPH_TOKEN_KEY, {"blob": encrypt_credential(token.strip())})
+
+
+def _graph_token() -> str:
+    with _db_session() as db:
+        from memes_shared.models import AppSetting
+
+        row = db.get(AppSetting, GRAPH_TOKEN_KEY)
+        if row is None:
+            return ""
+        try:
+            return decrypt_credential(row.value.get("blob", ""))
+        except Exception:
+            return ""
+
+
+def collect_posts_graph(profile: str, limit: int, ig_user_id: str) -> list[dict]:
+    """Official path: Meta business_discovery (public business/creator accounts).
+
+    Needs a Facebook-side token with instagram_basic (EAAZ…). Returns the
+    same post dicts as collect_posts (media_url is direct mp4 for reels).
+    """
+    token = _graph_token()
+    if not token:
+        raise ValueError("no Graph token saved — paste one in the dashboard (Instagram Import → Graph API token)")
+    import urllib.parse
+
+    fields = urllib.parse.quote(
+        f"business_discovery.username({profile}){{followers_count,media.limit({limit}){{id,media_type,media_product_type,media_url,permalink,caption,timestamp}}}}"
+    )
+    with httpx.Client(timeout=30.0) as client:
+        r = client.get(
+            f"https://graph.facebook.com/v21.0/{ig_user_id}",
+            params={"fields": fields, "access_token": token},
+        )
+        body = _json_safe(r.json())
+        if r.status_code >= 400 or "error" in body:
+            msg = (body.get("error") or {}).get("message", r.text[:160])
+            raise ValueError(f"Graph business_discovery failed: {msg[:180]}")
+        bd = body.get("business_discovery") or {}
+        media = (bd.get("media") or {}).get("data", [])
+        out = []
+        for m in media:
+            if m.get("media_type") != "VIDEO":
+                continue
+            permalink = m.get("permalink", "")
+            shortcode = permalink.rstrip("/").split("/")[-1] if permalink else m["id"]
+            out.append({
+                "shortcode": shortcode,
+                "video_url": m.get("media_url", ""),
+                "caption": (m.get("caption") or "")[:200],
+                "title": f"@{profile} reel {shortcode}",
+            })
+            if len(out) >= limit:
+                break
+        if not out:
+            raise ValueError(f"@{profile}: no video media returned (private account? or not a business/creator account?)")
+        return out
+
+
+def _json_safe(o):
+    return o
     instaloader = _lazy()
     L = _base_loader(instaloader)
     L.context.max_connection_attempts = 2  # fail fast instead of 429 backoff loops
@@ -240,11 +311,34 @@ def import_job(
     try:
         posts = collect_posts(profile, limit)
     except ValueError as e:
-        stats.update(running=False, finished_at=datetime.now(timezone.utc).isoformat())
-        stats["messages"].append(f"🔴 {e}")
-        if progress:
-            progress(dict(stats))
-        return stats
+        # instaloader path failed (usually IP rate-limit) → try official Graph discovery
+        if graph_token_set():
+            stats["messages"].append("⚠️ instaloader blocked — falling back to Graph business_discovery…")
+            if progress:
+                progress(dict(stats))
+            ig_id = _posting_ig_user_id()
+            if not ig_id:
+                stats.update(running=False, finished_at=datetime.now(timezone.utc).isoformat())
+                stats["messages"].append("🔴 no Instagram destination account with an id — cannot use Graph fallback")
+                if progress:
+                    progress(dict(stats))
+                return stats
+            try:
+                posts = collect_posts_graph(profile, limit, ig_id)
+                stats["messages"].append("✅ Graph discovery succeeded")
+            except ValueError as e2:
+                stats.update(running=False, finished_at=datetime.now(timezone.utc).isoformat())
+                stats["messages"].append(f"🔴 {e}")
+                stats["messages"].append(f"🔴 {e2}")
+                if progress:
+                    progress(dict(stats))
+                return stats
+        else:
+            stats.update(running=False, finished_at=datetime.now(timezone.utc).isoformat())
+            stats["messages"].append(f"🔴 {e}")
+            if progress:
+                progress(dict(stats))
+            return stats
 
     for i, p in enumerate(posts):
         if cancel_check and cancel_check():
@@ -390,6 +484,18 @@ def run_due_watchlist(now: datetime | None = None) -> list[dict]:
             set_setting(db, WATCHLIST_KEY, {"entries": data.get("entries", [])})
         time.sleep(10)
     return results
+
+
+def _posting_ig_user_id() -> str:
+    with _db_session() as db:
+        from memes_shared.models import DestinationAccount
+
+        row = (
+            db.query(DestinationAccount)
+            .filter(DestinationAccount.platform == "instagram", DestinationAccount.external_id != "")
+            .first()
+        )
+        return row.external_id if row else ""
 
 
 # ── small helper ─────────────────────────────────────────────────────────
