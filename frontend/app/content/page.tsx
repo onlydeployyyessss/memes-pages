@@ -19,6 +19,8 @@ export default function ContentPage() {
   const [igMsg, setIgMsg] = useState<string | null>(null);
   const [igUser, setIgUser] = useState("");
   const [igPass, setIgPass] = useState("");
+  const [igSessUser, setIgSessUser] = useState("");
+  const [igSessId, setIgSessId] = useState("");
   const [igSessions, setIgSessions] = useState<string[]>([]);
   const [watchlist, setWatchlist] = useState<any[]>([]);
   const [wlProfile, setWlProfile] = useState("");
@@ -165,6 +167,23 @@ export default function ContentPage() {
             <button className="btn-ghost">🔐 Save session</button>
             {igSessions.length > 0 && <span>active sessions: {igSessions.join(", ")}</span>}
           </form>
+          <div className="mt-3 border-t border-gray-800 pt-2">
+            <div className="font-medium text-gray-300 mb-1">Recommended: paste your browser's <code>sessionid</code> (no checkpoint, no password)</div>
+            <div className="text-xs text-gray-500 mb-2">Log into instagram.com as the burner in THIS browser → press F12 → Application (or Storage) → Cookies → instagram.com → copy the value of <code>sessionid</code> → paste it here.</div>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              setIgMsg("⏳ importing session…");
+              try {
+                const res = await api.post("/instaloader/session-import", { username: igUser || igSessUser, sessionid: igSessId });
+                setIgMsg(`🟢 session imported (${res.logged_in_as})`);
+                loadIgStatus();
+              } catch (err: any) { setIgMsg(`🔴 ${err.message}`); }
+            }} className="flex flex-wrap items-center gap-2">
+              <input className="input w-auto" placeholder="instagram username" value={igSessUser} onChange={(e) => setIgSessUser(e.target.value)} />
+              <input className="input flex-1 min-w-[240px]" placeholder="paste sessionid cookie value" value={igSessId} onChange={(e) => setIgSessId(e.target.value)} />
+              <button className="btn-primary">📥 Import session</button>
+            </form>
+          </div>
           <p className="mt-1 text-xs">Password is used once and never stored. Only import content you own or have permission to re-post.</p>
         </details>
 

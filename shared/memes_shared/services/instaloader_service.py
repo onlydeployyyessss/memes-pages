@@ -66,6 +66,32 @@ def login_save(username: str, password: str) -> dict:
     return {"username": username, "sessions": list_sessions()}
 
 
+def import_session(username: str, sessionid: str) -> dict:
+    """Build a session from a browser sessionid cookie (trusted-login path).
+
+    The user copies the value from their own logged-in browser (F12 →
+    Cookies → instagram.com → sessionid). We inject it into instaloader,
+    verify it live, and store it encrypted — no password, no checkpoint.
+    """
+    instaloader = _lazy()
+    L = _base_loader(instaloader)
+    L.context.session.cookies.set("sessionid", sessionid.strip(), domain=".instagram.com", path="/")
+    L.context.username = username
+    who = L.test_login()
+    if not who:
+        raise ValueError("That sessionid was rejected by Instagram — make sure you copied the FULL value from a logged-in instagram.com tab (F12 → Application → Cookies)")
+    fd, tmp_path = tempfile.mkstemp(suffix=".session")
+    import os
+
+    os.close(fd)
+    L.save_session_to_file(tmp_path)
+    blob = base64.b64encode(Path(tmp_path).read_bytes()).decode()
+    Path(tmp_path).unlink(missing_ok=True)
+    with _db_session() as db:
+        set_setting(db, SESSION_KEY_PREFIX + username, {"blob": encrypt_credential(blob)})
+    return {"username": username, "logged_in_as": who, "sessions": list_sessions()}
+
+
 def list_sessions() -> list[str]:
     with _db_session() as db:
         data = get_setting(db, WATCHLIST_KEY)  # ensure settings table touched

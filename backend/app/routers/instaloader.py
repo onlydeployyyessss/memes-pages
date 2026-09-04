@@ -22,6 +22,11 @@ JOB: dict = {"running": False, "profile": "", "fetched": 0, "queued": 0, "failed
 _CANCEL = False
 
 
+class SessionImportIn(BaseModel):
+    username: str = Field(min_length=1, max_length=60)
+    sessionid: str = Field(min_length=20, max_length=600)
+
+
 class LoginIn(BaseModel):
     username: str = Field(min_length=1, max_length=60)
     password: str = Field(min_length=1, max_length=200)
@@ -49,6 +54,15 @@ def login(body: LoginIn):
         raise HTTPException(400, str(e)) from None
     return {"ok": True, **res,
             "message": "session saved encrypted — reused automatically (password never stored)"}
+
+
+@router.post("/session-import")
+def session_import(body: SessionImportIn):
+    try:
+        res = svc.import_session(body.username.strip(), body.sessionid)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from None
+    return {"ok": True, **res, "message": "session imported from your browser — reused automatically"}
 
 
 @router.get("/status")
