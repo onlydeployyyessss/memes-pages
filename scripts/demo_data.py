@@ -135,7 +135,7 @@ def seed_demo() -> None:
             )
             s.add(content)
             s.flush()
-            s.add(TrendScore(content_id=content.id, score=score, signals=breakmark := breakdown,
+            s.add(TrendScore(content_id=content.id, score=score, signals=breakdown,
                              computed_at=now))
         s.commit()
         print("✔ demo accounts, sources, captions and trending content created")

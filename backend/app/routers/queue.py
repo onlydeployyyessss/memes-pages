@@ -25,7 +25,7 @@ def list_jobs(
         db.query(PublishingJob, DestinationAccount, DiscoveredContent)
         .join(DestinationAccount, DestinationAccount.id == PublishingJob.account_id)
         .outerjoin(DiscoveredContent, DiscoveredContent.id == PublishingJob.content_id)
-        .order_by(PublishingJob.publish_at.is_(True), PublishingJob.publish_at, PublishingJob.id.desc())
+        .order_by(PublishingJob.publish_at.is_(None), PublishingJob.publish_at, PublishingJob.id.desc())
     )
     if status:
         q = q.filter(PublishingJob.status == status)

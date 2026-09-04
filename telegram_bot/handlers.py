@@ -316,7 +316,7 @@ async def show_queue(message: Message, edit: bool = False):
             s.query(PublishingJob, DestinationAccount)
             .join(DestinationAccount, DestinationAccount.id == PublishingJob.account_id)
             .filter(PublishingJob.status.in_(["queued", "scheduled", "publishing"]))
-            .order_by(PublishingJob.publish_at.is_(True), PublishingJob.publish_at)
+            .order_by(PublishingJob.publish_at.is_(None), PublishingJob.publish_at)
             .limit(10)
             .all()
         )
