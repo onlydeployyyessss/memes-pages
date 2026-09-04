@@ -21,5 +21,8 @@ COPY backend/ /app/backend/
 COPY worker/ /app/worker/
 COPY telegram-bot/ /app/telegram-bot/
 COPY scripts/ /app/scripts/
+COPY docker/entrypoint.sh /app/docker/entrypoint.sh
+RUN chmod +x /app/docker/entrypoint.sh
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "backend"]
+# ROLE env var (api | worker | telegram-bot) selects the process; default api.
+ENTRYPOINT ["sh", "/app/docker/entrypoint.sh"]
