@@ -75,7 +75,8 @@ def import_session(username: str, sessionid: str) -> dict:
     """
     instaloader = _lazy()
     L = _base_loader(instaloader)
-    L.context.session.cookies.set("sessionid", sessionid.strip(), domain=".instagram.com", path="/")
+    sess = L.context.get_session() if hasattr(L.context, "get_session") else L.context._session
+    sess.cookies.set("sessionid", sessionid.strip(), domain=".instagram.com", path="/")
     L.context.username = username
     who = L.test_login()
     if not who:
