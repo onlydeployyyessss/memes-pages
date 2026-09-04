@@ -377,5 +377,6 @@ def _db_session():
     def _ctx():
         with SessionLocal() as s:
             yield s
+            s.commit()  # set_setting only flushes — persist service-owned writes
 
     return _ctx()
