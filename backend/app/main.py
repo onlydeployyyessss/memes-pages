@@ -125,6 +125,7 @@ def create_app() -> FastAPI:
         covers,
         feeds,
         health,
+        instaloader,
         queue,
         reports,
         schedule,
@@ -149,6 +150,7 @@ def create_app() -> FastAPI:
     app.include_router(reports.router, prefix=f"{API}/reports", tags=["reports"])
     app.include_router(settings.router, prefix=f"{API}/settings", tags=["settings"])
     app.include_router(ai.router, prefix=f"{API}/ai", tags=["ai"])
+    app.include_router(instaloader.router, prefix=f"{API}/instaloader", tags=["instaloader"])
     app.include_router(automation.router, prefix=f"{API}/automation", tags=["automation"])
     app.include_router(audit.router, prefix=f"{API}/audit", tags=["audit"])
     return app
