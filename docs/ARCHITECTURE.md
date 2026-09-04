@@ -132,6 +132,28 @@ account paused, **dispatch loop stops**, admin alert. `auth` → account
 integration marked `token_error`, admin alert. `transient` → exponential
 backoff (base × 2^attempt). `config`/`invalid` → failed with clear message.
 
+## AI layer (OpenRouter, optional)
+
+```
+AIService (services/ai/service.py)  ← every feature calls ONLY this
+├── usage budget check (requests/hour, requests/day from ai_usage_logs)
+├── retry (transient/rate-limit/timeout), timeout from env
+├── JSON extraction + Pydantic validation (schemas.py)
+├── usage logging (ai_usage_logs: tokens, latency, success, error)
+└── provider: AIProvider ── OpenRouterProvider (base_url openrouter.ai)
+                                      └── future providers
+```
+
+Callers: `trend_scan` (structured analysis; bounded blend with deterministic
+score), `publishing.resolve_caption` (per-account opt-in AI captions),
+`reports` (AI summary from DB payload), Telegram `ai_assistant`
+(answers from live DB context only), REST `/api/v1/ai/*` (status, settings,
+test-connection, caption/hashtag/categorize tools).
+
+Failure semantics: any provider error/timeout/malformed JSON/budget hit →
+feature returns None/empty → deterministic path continues. The key exists only
+as the `OPENROUTER_API_KEY` env secret.
+
 ## Security model
 
 - **JWT** (HS256, 12 h) for dashboard sessions; bcrypt password hashing

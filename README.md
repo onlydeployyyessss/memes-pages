@@ -38,6 +38,7 @@ Track performance → Reports
 | 📄 **Reports** | Daily / weekly / monthly / network / account reports — pushed to Telegram automatically |
 | 🔔 **Notifications** | Publish success/failure, high trend scores, milestones, automation errors, daily report |
 | 🛡 **Security** | JWT auth, bcrypt password hashing, role-based access (owner/admin/viewer), AES (Fernet) credential encryption at rest, rate limiting, audit logs |
+| 🤖 **AI (OpenRouter)** | Modular AI provider layer: AI trend analysis with structured JSON (Pydantic-validated), caption/hashtag generation, content categorization, AI report summaries, 🤖 Ask-AI assistant in Telegram — with strict cost controls, usage logging and **deterministic fallback** (AI failure never stops automation) |
 
 ## 🧱 Tech stack
 
@@ -121,6 +122,9 @@ See [`.env.example`](.env.example) for the full annotated list. The essentials:
 | `MEMES_PUBLIC_MEDIA_BASE_URL` | public URL serving `/media` (required for Instagram API publishing) |
 | `MEMES_CREDENTIAL_ENCRYPTION_KEY` | key for account credentials at rest |
 | `MEMES_AGENT_REACH_ENABLED` | opt-in for the experimental Agent-Reach provider |
+| `OPENROUTER_API_KEY` | OpenRouter AI key (optional — everything works without AI) |
+| `OPENROUTER_MODEL` | default AI model (default `minimax/minimax-m3:free`) |
+| `OPENROUTER_MAX_TOKENS` / `OPENROUTER_TIMEOUT` | AI token & timeout limits |
 
 ## 🤖 Telegram bot
 
@@ -156,6 +160,35 @@ same `DiscoveryProvider` interface — the full honest evaluation and integratio
 contract is in [`docs/AGENT_REACH_EVALUATION.md`](docs/AGENT_REACH_EVALUATION.md).
 The system never depends on it.
 
+## 🤖 OpenRouter AI layer
+
+All AI features go through one provider-agnostic service
+(`shared/memes_shared/services/ai/`) — OpenRouter is the first provider and can
+be swapped later by implementing `AIProvider`:
+
+```
+AIProvider
+├── OpenRouterProvider   ← OPENROUTER_API_KEY (env secret, never exposed)
+└── Future AI Providers
+```
+
+**Features:** structured Trend Hunter analysis (score/level/confidence/reason/
+recommendation as Pydantic-validated JSON), caption & hashtag generation,
+content categorization & language detection, human-readable AI report
+summaries (built **only** from real DB analytics), and the 🤖 Ask-AI assistant
+in Telegram that answers from live database context.
+
+**Cost controls:** configurable model, max requests/hour & /day, token limit,
+timeout, retries — every call logged to `ai_usage_logs` and shown in
+Dashboard → 🤖 AI (Requests Today, token usage, 🟢 connection status, Test
+Connection button). The API key is **never** returned by endpoints, logged, or
+sent to the frontend.
+
+**Hard rule:** the AI assists — it never bypasses source authorization,
+duplicate detection, publishing limits or platform errors. If OpenRouter is
+down/times out/returns garbage/hits the budget, Trend Hunter falls back to the
+deterministic score and the pipeline continues untouched.
+
 ## 🧪 Tests
 
 ```bash
@@ -179,6 +212,7 @@ audit_logs, app_settings. Migrations: `alembic -c shared/alembic.ini upgrade hea
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — GitHub + Railway deployment
 - [`docs/TELEGRAM_BOT.md`](docs/TELEGRAM_BOT.md) — bot setup & commands
 - [`docs/AGENT_REACH_EVALUATION.md`](docs/AGENT_REACH_EVALUATION.md) — provider evaluation
+- [`docs/OPENROUTER_AI.md`](docs/OPENROUTER_AI.md) — AI integration guide
 
 ## ⚖️ Acceptable-use summary
 

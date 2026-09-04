@@ -78,6 +78,14 @@ export default function TrendingPage() {
                   Engagement rate: {(Number(t.trend_signals?.engagement_rate ?? 0) * 100).toFixed(1)}% •
                   Discovered {fmtDate(t.discovered_at)}
                 </div>
+                {t.ai_analysis && (
+                  <div className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-3 py-2 text-xs text-indigo-200">
+                    🧠 <b>AI</b> ({t.ai_analysis.model}): score {t.ai_analysis.trend_score} ·
+                    {" "}{t.ai_analysis.trend_level} · confidence {t.ai_analysis.confidence} ·
+                    recommendation: {t.ai_analysis.recommendation}
+                    {t.ai_analysis.reason && <div className="mt-1 text-indigo-300/90">"{t.ai_analysis.reason}"</div>}
+                  </div>
+                )}
                 {t.rule_decision && (
                   <div className={`rounded-lg border px-3 py-2 text-xs ${t.rule_decision.approved ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-amber-500/30 bg-amber-500/10 text-amber-300"}`}>
                     {t.rule_decision.approved

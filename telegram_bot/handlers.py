@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from sqlalchemy import func
 
@@ -39,6 +40,7 @@ SECTION_BY_TEXT = {
     "🎬 Content": "content", "📥 Queue": "queue", "📅 Schedule": "schedule",
     "📝 Captions": "captions", "🖼 Covers": "covers", "📈 Analytics": "analytics",
     "📄 Reports": "reports", "⚙️ Settings": "settings", "🟢 Automation": "automation",
+    "🤖 Ask AI": "ask_ai",
 }
 
 
@@ -73,10 +75,15 @@ async def cmd_id(message: Message):
 
 
 @router.message(F.text.in_(SECTION_BY_TEXT.keys()))
-async def section_entry(message: Message):
+async def section_entry(message: Message, state: FSMContext = None):
     if not is_authorized(message.from_user.id):
         return
     section = SECTION_BY_TEXT[message.text]
+    if section == "ask_ai":
+        from telegram_bot.ai_assistant import show_ask_ai
+
+        await show_ask_ai(message, state=state)
+        return
     handler = {
         "dashboard": show_dashboard, "accounts": show_accounts,
         "trending": show_trending, "content": show_content, "queue": show_queue,

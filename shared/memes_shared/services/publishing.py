@@ -34,6 +34,28 @@ def resolve_caption(session: Session, account: DestinationAccount, content: Disc
     cs = cs or {}
     mode = cs.get("mode", "default")
     hashtags = cs.get("hashtags") or []
+
+    # ── Optional AI caption generation (per-account opt-in, falls back) ──
+    if cs.get("use_ai"):
+        try:
+            from memes_shared.services.ai import get_ai
+
+            ai = get_ai(session)
+            if ai.configured and ai.cfg.get("caption_generation", True):
+                captions = ai.generate_captions(
+                    title=(content.title if content else "") or "",
+                    description=(content.description if content else "") or "",
+                    category=(content.category if content else "") or "memes",
+                    tone=cs.get("ai_tone", "fun, casual"),
+                    count=1,
+                    platform=account.platform or "instagram",
+                )
+                if captions:
+                    return captions[0], None
+        except Exception as e:  # noqa: BLE001 — AI captions are best-effort
+            log.warning("AI caption failed for account %s: %s", account.id, e)
+        # fall through to configured caption modes on any failure
+
     caption_row = session.get(Caption, account.default_caption_id) if account.default_caption_id else None
     template_row = session.get(CaptionTemplate, account.caption_template_id) if account.caption_template_id else None
 

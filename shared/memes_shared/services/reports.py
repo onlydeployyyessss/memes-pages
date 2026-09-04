@@ -6,6 +6,7 @@ from datetime import timedelta
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from memes_shared.logging_setup import get_logger
 from memes_shared.models import (
     DailyMetric,
     DestinationAccount,
@@ -16,6 +17,8 @@ from memes_shared.models import (
 from memes_shared.services.notifier import notify_admins
 from memes_shared.services.settings import get_setting
 from memes_shared.utils.timeutil import utcnow
+
+log = get_logger("memes.reports")
 
 
 def fmt_int(n: float) -> str:
@@ -138,6 +141,18 @@ def generate_report(session: Session, report_type: str, account_id: int | None =
         "account": f"ACCOUNT REPORT — @{account.username}" if account else "ACCOUNT REPORT",
     }.get(report_type, "MEMES PAGES REPORT")
     text = build_report_text(label, d)
+
+    # ── Optional AI-written summary (from DB data only, never invented) ──
+    try:
+        from memes_shared.services.ai import get_ai
+
+        ai = get_ai(session)
+        if ai.configured and get_setting(session, "ai").get("report_summaries"):
+            ai_summary = ai.summarize_report(text, d)
+            if ai_summary:
+                text = f"{text}\n\n{ai_summary}"
+    except Exception as e:  # noqa: BLE001 — reports work without AI
+        log.warning("AI report summary failed: %s", e)
     report = Report(
         report_type=report_type,
         title=label[:255],

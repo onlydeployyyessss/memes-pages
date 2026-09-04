@@ -35,6 +35,24 @@ class ErrorLog(Base, BaseMixin):
     resolved: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
+class AIUsageLog(Base, BaseMixin):
+    """One row per AI provider call (cost control + observability)."""
+
+    __tablename__ = "ai_usage_logs"
+
+    provider: Mapped[str] = mapped_column(String(40), default="openrouter", index=True)
+    model: Mapped[str] = mapped_column(String(120), default="")
+    feature: Mapped[str] = mapped_column(String(40), default="", index=True)
+    # trend_analysis | captions | hashtags | categorize | language |
+    # report_summary | assistant | test
+    success: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    prompt_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    latency_ms: Mapped[int] = mapped_column(Integer, default=0)
+    error_type: Mapped[str] = mapped_column(String(40), default="")
+    error: Mapped[str] = mapped_column(Text, default="")
+
+
 class AuditLog(Base, BaseMixin):
     __tablename__ = "audit_logs"
 

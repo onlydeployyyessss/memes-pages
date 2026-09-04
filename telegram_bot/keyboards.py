@@ -33,11 +33,11 @@ def main_menu() -> ReplyKeyboardMarkup:
         ("🎬 Content",), ("📥 Queue",), ("📅 Schedule",),
         ("📝 Captions",), ("🖼 Covers",), ("📈 Analytics",),
         ("📄 Reports",), ("⚙️ Settings",), ("🟢 Automation",),
-        ("⬆️ Upload Video",),
+        ("🤖 Ask AI",), ("⬆️ Upload Video",),
     ]
     for (label,) in rows:
         b.button(text=label)
-    b.adjust(2, 2, 2, 2, 2, 2, 1)
+    b.adjust(2, 2, 2, 2, 2, 2, 2)
     return b.as_markup(resize_keyboard=True)
 
 

@@ -116,7 +116,7 @@ def create_app() -> FastAPI:
 
     # ── Routers ──────────────────────────────────────────────────────
     from backend.app.routers import (
-        accounts, analytics, audit, auth, automation, captions, content,
+        accounts, ai, analytics, audit, auth, automation, captions, content,
         covers, feeds, health, queue, reports, schedule, settings, sources,
         trending,
     )
@@ -136,6 +136,7 @@ def create_app() -> FastAPI:
     app.include_router(analytics.router, prefix=f"{API}/analytics", tags=["analytics"])
     app.include_router(reports.router, prefix=f"{API}/reports", tags=["reports"])
     app.include_router(settings.router, prefix=f"{API}/settings", tags=["settings"])
+    app.include_router(ai.router, prefix=f"{API}/ai", tags=["ai"])
     app.include_router(automation.router, prefix=f"{API}/automation", tags=["automation"])
     app.include_router(audit.router, prefix=f"{API}/audit", tags=["audit"])
     return app

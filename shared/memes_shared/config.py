@@ -49,6 +49,12 @@ class Settings(BaseSettings):
     agent_reach_enabled: bool = False
     agent_reach_bin: str = "agent-reach"
 
+    # OpenRouter (AI provider) — key never leaves the server
+    openrouter_api_key: str = ""
+    openrouter_model: str = "minimax/minimax-m3:free"
+    openrouter_max_tokens: int = 1000
+    openrouter_timeout: int = 30
+
     # ── Derived ──────────────────────────────────────────────────────
     @property
     def effective_database_url(self) -> str:

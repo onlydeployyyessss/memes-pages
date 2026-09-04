@@ -44,6 +44,7 @@ def list_trending(
         d = to_dict(content, exclude={"raw_metrics"})
         d["trend_score"] = ts.score if ts else None
         d["trend_signals"] = (ts.signals if ts else {}).get("components", {})
+        d["ai_analysis"] = (ts.signals or {}).get("ai") if ts else None
         d["source_name"] = source.name if source else None
         d["source_authorization"] = source.authorization if source else None
         d["rule_decision"] = (content.raw_metrics or {}).get("rule_decision")

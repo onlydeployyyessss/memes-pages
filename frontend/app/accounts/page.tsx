@@ -142,6 +142,8 @@ function AccountSettingsPanel({ acc, captions, covers, onSaveSettings, onSaveCre
   const [customText, setCustomText] = useState(s.caption_settings?.custom_text ?? "");
   const [hashtags, setHashtags] = useState((s.caption_settings?.hashtags ?? []).join(", "));
   const [distEnabled, setDistEnabled] = useState(s.distribution?.enabled !== false);
+  const [useAi, setUseAi] = useState(!!s.caption_settings?.use_ai);
+  const [aiTone, setAiTone] = useState(s.caption_settings?.ai_tone ?? "fun, casual");
   const [maxDay, setMaxDay] = useState(s.posting_limits?.max_per_day ?? 8);
   const [delay, setDelay] = useState(s.distribution?.publish_delay_minutes ?? 0);
   const [creds, setCreds] = useState("{}");
@@ -180,10 +182,20 @@ function AccountSettingsPanel({ acc, captions, covers, onSaveSettings, onSaveCre
         <input type="checkbox" checked={distEnabled} onChange={(e) => setDistEnabled(e.target.checked)} />
         Receive auto-distributed trending videos
       </label>
+      <label className="flex items-center gap-2 text-gray-300">
+        <input type="checkbox" checked={useAi} onChange={(e) => setUseAi(e.target.checked)} />
+        🧠 AI-generated captions (optional — falls back to the caption above if AI is off)
+      </label>
+      {useAi && (
+        <div>
+          <label className="label">AI caption tone</label>
+          <input className="input" value={aiTone} onChange={(e) => setAiTone(e.target.value)} />
+        </div>
+      )}
       <div className="flex gap-2">
         <button className="btn-primary flex-1 justify-center"
           onClick={() => onSaveSettings(acc, {
-            caption_settings: { mode: capMode, custom_text: customText, hashtags: hashtags.split(",").map((x) => x.trim().replace(/^#/, "")).filter(Boolean), first_comment: "" },
+            caption_settings: { mode: capMode, custom_text: customText, hashtags: hashtags.split(",").map((x) => x.trim().replace(/^#/, "")).filter(Boolean), first_comment: "", use_ai: useAi, ai_tone: aiTone },
             posting_limits: { ...(s.posting_limits ?? {}), max_per_day: maxDay },
             distribution: { ...(s.distribution ?? {}), enabled: distEnabled, publish_delay_minutes: delay },
           })}>

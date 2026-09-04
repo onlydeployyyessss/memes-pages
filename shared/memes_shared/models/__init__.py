@@ -35,6 +35,7 @@ from memes_shared.models.publishing import (
 )
 from memes_shared.models.analytics import AnalyticsEvent, Report
 from memes_shared.models.logs import (
+    AIUsageLog,
     AppSetting,
     AuditLog,
     AutomationLog,
@@ -55,5 +56,5 @@ __all__ = [
     "Caption", "CaptionTemplate", "ReelCover",
     "PublishingBatch", "PublishingHistory", "PublishingJob", "Schedule",
     "AnalyticsEvent", "Report",
-    "AppSetting", "AuditLog", "AutomationLog", "ErrorLog",
+    "AppSetting", "AuditLog", "AutomationLog", "ErrorLog", "AIUsageLog",
 ]

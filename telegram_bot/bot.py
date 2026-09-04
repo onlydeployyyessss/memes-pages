@@ -25,11 +25,13 @@ log = get_logger("memes.bot")
 
 def build_dispatcher() -> Dispatcher:
     dp = Dispatcher(storage=MemoryStorage())
+    from telegram_bot.ai_assistant import router as ai_router
     from telegram_bot.handlers import router as sections_router
     from telegram_bot.upload import router as upload_router
 
     dp.include_router(sections_router)
     dp.include_router(upload_router)
+    dp.include_router(ai_router)
     return dp
 
 

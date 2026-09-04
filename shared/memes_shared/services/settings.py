@@ -82,6 +82,30 @@ DEFAULT_SETTINGS: dict[str, dict] = {
         "agent_reach_enabled": False,   # never required — RSS works standalone
         "max_age_filter_hours": 72,     # ignore older items entirely
     },
+    # ── AI (OpenRouter) ──────────────────────────────────────────────
+    "ai": {
+        "enabled": True,                # master switch (still needs API key)
+        "provider": "openrouter",       # AIProvider implementation to use
+        "model": "minimax/minimax-m3:free",
+        "available_models": [
+            "minimax/minimax-m3:free",
+            "inclusionai/ling-3.0-flash-fin:free",
+            "nvidia/nemotron-3-ultra-550b-a55b:free",
+            "liquid/lfm-2.5-embedding-350m:free",  # embedding model — chat calls will fail
+        ],
+        # Feature toggles
+        "trend_assist": True,           # attach AI trend analysis to Trend Hunter
+        "influence_scoring": True,      # blend AI score into final score (bounded)
+        "blend_weight": 0.3,            # final = det*(1-w) + ai*w, clamped ±max_adj
+        "max_score_adjustment": 10.0,   # AI can move the deterministic score by ≤10
+        "caption_generation": True,     # allow per-account AI captions (still optional)
+        "report_summaries": True,       # AI-written summary atop DB-derived reports
+        "assistant_enabled": True,      # 🤖 Ask AI in Telegram
+        # Cost controls
+        "max_requests_per_hour": 30,
+        "max_requests_per_day": 300,
+        "retries": 1,
+    },
 }
 
 

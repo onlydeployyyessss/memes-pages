@@ -111,25 +111,33 @@ def job_reports():
 
 
 def job_cleanup():
-    """Remove temp files older than 12h."""
+    """Remove temp files older than 12h + prune AI usage logs older than 30d."""
+    from datetime import timedelta
+
     from pathlib import Path
 
     from memes_shared.config import get_settings
+    from memes_shared.models import AIUsageLog
 
     tmp = get_settings().media_path / "tmp"
-    now = utcnow().timestamp()
+    now = utcnow()
     removed = 0
     if tmp.exists():
         for f in tmp.iterdir():
             try:
-                if f.is_file() and now - f.stat().st_mtime > 12 * 3600:
+                if f.is_file() and now.timestamp() - f.stat().st_mtime > 12 * 3600:
                     f.unlink()
                     removed += 1
             except OSError:
                 continue
-    if removed:
-        with get_session() as s:
-            automation.record_run(s, "cleanup", f"removed {removed} temp files")
+    with get_session() as s:
+        pruned = (
+            s.query(AIUsageLog)
+            .filter(AIUsageLog.created_at < now - timedelta(days=30))
+            .delete()
+        )
+        msg = f"removed {removed} temp files, pruned {pruned} ai usage rows"
+        automation.record_run(s, "cleanup", msg)
 
 
 def run_requested_check():

@@ -48,7 +48,17 @@ repo** → select `memes-pages`. Then add services:
     MEMES_ADMIN_PASSWORD=<strong password>
     MEMES_CREDENTIAL_ENCRYPTION_KEY=<openssl rand -hex 32>
     MEMES_PUBLIC_MEDIA_BASE_URL=https://<backend-domain>/media
+    OPENROUTER_API_KEY=<optional — AI features; set on backend AND worker>
+    OPENROUTER_MODEL=minimax/minimax-m3:free
+    OPENROUTER_MAX_TOKENS=1000
+    OPENROUTER_TIMEOUT=30
     ```
+
+> 🔐 Add `OPENROUTER_API_KEY` via Railway → service → Variables (it is a
+> secret, never commit it). Free models (`:free`) cost nothing but still
+> respect the request-per-hour/day limits configured in Dashboard → 🤖 AI.
+> The worker needs the key too — it runs Trend Hunter analysis, AI captions
+> and report summaries.
   - **Networking** → generate domain → port `8000`
   - Add a **volume** mounted at `/app/media` (so processed videos survive deploys)
 

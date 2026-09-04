@@ -16,6 +16,7 @@ from memes_shared.models import (
     TrendScore,
 )
 from memes_shared.services import rule_engine, trend_engine
+from memes_shared.services.ai import get_ai
 from memes_shared.services.settings import get_setting
 from memes_shared.services.notifier import notify_admins
 from memes_shared.utils.timeutil import utcnow
@@ -35,6 +36,8 @@ def run_trend_scan(session: Session, limit: int = 50) -> dict:
     rules_cfg = get_setting(session, "rules")
     notif_cfg = get_setting(session, "notifications")
     discovery_cfg = get_setting(session, "discovery")
+    ai_cfg = get_setting(session, "ai")
+    ai = get_ai(session)
 
     max_age_filter = float(discovery_cfg.get("max_age_filter_hours", 72))
     now = utcnow()
@@ -88,6 +91,55 @@ def run_trend_scan(session: Session, limit: int = 50) -> dict:
             now=now,
         )
 
+        # ── OpenRouter AI analysis (optional — never blocks, never crashes) ──
+        ai_data = None
+        if ai.configured and ai_cfg.get("trend_assist"):
+            try:
+                meta = {
+                    "title": (content.title or "")[:200],
+                    "description": (content.description or "")[:400],
+                    "category": content.category,
+                    "source": source.name if source else "manual",
+                    "source_authorization": source.authorization if source else None,
+                    "views": breakdown.get("views", 0),
+                    "likes": breakdown.get("likes", 0),
+                    "comments": breakdown.get("comments", 0),
+                    "shares": breakdown.get("shares", 0),
+                    "engagement_rate": breakdown.get("engagement_rate", 0),
+                    "growth_velocity_percent_per_hour": breakdown.get(
+                        "growth_rate_percent_per_hour", 0),
+                    "content_age_hours": breakdown.get("content_age_hours", 0),
+                    "historical_source_performance": {
+                        "successful_checks": source.success_count if source else 0,
+                        "failed_checks": source.error_count if source else 0,
+                    },
+                }
+                analysis = ai.analyze_trend(meta)
+                if analysis is not None:
+                    deterministic_score = score
+                    ai_data = {
+                        "trend_score": round(analysis.trend_score, 1),
+                        "trend_level": analysis.trend_level,
+                        "confidence": round(analysis.confidence, 2),
+                        "category": analysis.category,
+                        "reason": analysis.reason,
+                        "recommendation": analysis.recommendation,
+                        "model": ai.provider.model if ai.provider else "",
+                    }
+                    if ai_cfg.get("influence_scoring"):
+                        # bounded blend — AI assists, deterministic engine anchors
+                        weight = min(1.0, max(0.0, float(ai_cfg.get("blend_weight", 0.3))))
+                        max_adj = float(ai_cfg.get("max_score_adjustment", 10.0))
+                        blended = deterministic_score * (1 - weight) + analysis.trend_score * weight
+                        score = round(
+                            max(deterministic_score - max_adj,
+                                min(deterministic_score + max_adj, blended)), 1)
+                        ai_data["deterministic_score"] = deterministic_score
+            except Exception as e:  # noqa: BLE001 — AI failure must never crash scoring
+                log.warning("AI trend analysis failed for #%s: %s", content.id, e)
+        if ai_data is not None:
+            breakdown["ai"] = ai_data
+
         # persist score + history (upsert)
         ts = session.query(TrendScore).filter(TrendScore.content_id == content.id).first()
         if ts is None:
@@ -103,7 +155,10 @@ def run_trend_scan(session: Session, limit: int = 50) -> dict:
         scored += 1
 
         if score >= float(notif_cfg.get("trend_hot_min_score", 90)):
-            hot_notifications.append(f"🔥 {score}/100 — {(content.title or content.url)[:80]}")
+            note = f"🔥 {score}/100 — {(content.title or content.url)[:80]}"
+            if ai_data and ai_data.get("reason"):
+                note += f"\n🧠 {ai_data['reason'][:140]}"
+            hot_notifications.append(note)
 
         decision = rule_engine.evaluate_rules(
             trend_score=score,
