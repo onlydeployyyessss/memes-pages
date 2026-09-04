@@ -19,7 +19,13 @@ from memes_shared.services.publishers.base import Publisher, PublishResult
 
 log = get_logger("memes.publishers.instagram")
 
-GRAPH = "https://graph.facebook.com/v21.0"
+GRAPH_FB = "https://graph.facebook.com/v21.0"
+GRAPH_IG = "https://graph.instagram.com/v21.0"
+
+
+def api_base(token: str) -> str:
+    """Instagram-hosted tokens (IG*) speak to graph.instagram.com; FB tokens to graph.facebook.com."""
+    return GRAPH_IG if token.startswith(("IGAA", "IGQ", "IGD", "IGSC")) else GRAPH_FB
 
 
 class InstagramPublisher(Publisher):
@@ -56,7 +62,8 @@ class InstagramPublisher(Publisher):
             }
             if cover_url:
                 payload["cover_url"] = cover_url
-            resp = client.post(f"{GRAPH}/{ig_user_id}/media", data=payload)
+            graph = api_base(token)
+            resp = client.post(f"{graph}/{ig_user_id}/media", data=payload)
             body = _json(resp)
             if resp.status_code >= 400:
                 return _fail(resp.status_code, body, "container creation failed")
@@ -66,14 +73,14 @@ class InstagramPublisher(Publisher):
                                      error_type="invalid", raw=body)
 
             # 2. wait for processing (official status endpoint)
-            ok, err = _wait_container(client, container_id, token)
+            ok, err = _wait_container(client, graph, container_id, token)
             if not ok:
                 return PublishResult(success=False, error=err, error_type="transient",
                                      raw={"container_id": container_id})
 
             # 3. publish
             resp = client.post(
-                f"{GRAPH}/{ig_user_id}/media_publish",
+                f"{graph}/{ig_user_id}/media_publish",
                 data={"creation_id": container_id, "access_token": token},
             )
             body = _json(resp)
@@ -110,11 +117,11 @@ def _fail(status: int, body: dict, context: str) -> PublishResult:
     return PublishResult(success=False, error=msg, error_type=etype, raw=body)
 
 
-def _wait_container(client: httpx.Client, container_id: str, token: str,
+def _wait_container(client: httpx.Client, graph: str, container_id: str, token: str,
                     timeout_s: int = 300) -> tuple[bool, str]:
     deadline = time.time() + timeout_s
     while time.time() < deadline:
-        resp = client.get(f"{GRAPH}/{container_id}",
+        resp = client.get(f"{graph}/{container_id}",
                           params={"fields": "status_code", "access_token": token})
         body = _json(resp)
         status = body.get("status_code", "")
