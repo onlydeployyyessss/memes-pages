@@ -5,6 +5,7 @@ import sys
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -49,11 +50,19 @@ class Settings(BaseSettings):
     agent_reach_enabled: bool = False
     agent_reach_bin: str = "agent-reach"
 
-    # OpenRouter (AI provider) — key never leaves the server
-    openrouter_api_key: str = ""
-    openrouter_model: str = "minimax/minimax-m3:free"
-    openrouter_max_tokens: int = 1000
-    openrouter_timeout: int = 30
+    # OpenRouter (AI provider) — key never leaves the server.
+    # Documented env names are prefix-less (OPENROUTER_*); accept both spellings.
+    openrouter_api_key: str = Field(
+        default="", validation_alias=AliasChoices("OPENROUTER_API_KEY", "MEMES_OPENROUTER_API_KEY"))
+    openrouter_model: str = Field(
+        default="minimax/minimax-m3:free",
+        validation_alias=AliasChoices("OPENROUTER_MODEL", "MEMES_OPENROUTER_MODEL"))
+    openrouter_max_tokens: int = Field(
+        default=1000,
+        validation_alias=AliasChoices("OPENROUTER_MAX_TOKENS", "MEMES_OPENROUTER_MAX_TOKENS"))
+    openrouter_timeout: int = Field(
+        default=30,
+        validation_alias=AliasChoices("OPENROUTER_TIMEOUT", "MEMES_OPENROUTER_TIMEOUT"))
 
     # ── Derived ──────────────────────────────────────────────────────
     @property
