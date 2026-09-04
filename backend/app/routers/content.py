@@ -53,6 +53,59 @@ def get_content(content_id: int, db: Session = Depends(get_db)):
     return d
 
 
+def _process_local_video(db: Session, content: DiscoveredContent, local_path: str):
+    """Shared upload pipeline: validate → dedup → normalize → cover → store.
+
+    Returns (Video | None, error string). On success the content row gets its
+    publishing jobs created by the caller.
+    """
+    from pathlib import Path as _Path
+
+    import hashlib
+
+    from memes_shared.models import VideoHash
+    from memes_shared.services import dedup, video as video_svc
+
+    cfg = get_settings()
+    src = _Path(local_path)
+    content.status = "processing"
+    db.flush()
+    try:
+        info, err = video_svc.validate_video(src)
+        if err:
+            return None, err
+        sha = dedup.sha256_file(src)
+        dup = dedup.check_media(db, sha256=sha)
+        if dup.is_duplicate:
+            content.status = "skipped"
+            content.error = f"duplicate: {dup.reason_text}"
+            return None, content.error
+        normalized = video_svc.normalize_video(src, cfg.media_path / "videos")
+        cover = ""
+        try:
+            cover = str(video_svc.extract_cover(normalized, cfg.media_path / "covers"))
+        except Exception:  # noqa: BLE001
+            pass
+        video = Video(
+            content_id=content.id, file_path=str(normalized), original_path=str(src),
+            cover_path=cover, file_size=normalized.stat().st_size,
+            duration=info.get("duration", 0), width=info.get("width", 0),
+            height=info.get("height", 0), fps=info.get("fps", 0),
+            has_audio=info.get("has_audio", True), status="ready",
+        )
+        db.add(video)
+        db.flush()
+        db.add(VideoHash(
+            video_id=video.id, sha256=sha,
+            source_url_hash=hashlib.sha256(content.url.encode()).hexdigest(),
+        ))
+        return video, ""
+    except Exception as e:  # noqa: BLE001
+        content.status = "failed"
+        content.error = str(e)[:1000]
+        return None, content.error
+
+
 @router.post("/upload", status_code=201)
 def upload_video(
     file: UploadFile = File(...),
@@ -61,7 +114,7 @@ def upload_video(
     caption: str = "",
     db: Session = Depends(get_db),
 ):
-    """Manual/Telegram upload: straight into the pipeline (manual = authorized
+    """Manual upload: straight into the pipeline (manual = authorized
     by definition — the operator owns the content they upload)."""
     allowed_ext = {".mp4", ".mov", ".webm", ".m4v", ".mkv", ".avi"}
     suffix = "." + (file.filename or "video.mp4").rsplit(".", 1)[-1].lower()
@@ -99,7 +152,7 @@ def upload_video(
     db.add(content)
     db.flush()
 
-    # manual uploads bypass discovery: pre-seed a perfect trend score context
+    # manual uploads bypass discovery: pre-seed trend context
     from memes_shared.services.trend_engine import compute_trend_score
 
     score, breakdown = compute_trend_score(
@@ -108,55 +161,18 @@ def upload_video(
     )
     db.add(TrendScore(content_id=content.id, score=score, signals=breakdown))
 
-    # inject local file directly into pipeline: wrap download step
-    content.status = "processing"
-    db.flush()
-    try:
-        from memes_shared.services import video as video_svc
+    video, error = _process_local_video(db, content, str(dest))
+    if video is not None:
         from memes_shared.services.publishing import create_jobs_for_content
-        from memes_shared.services import dedup
 
-        info, err = video_svc.validate_video(dest)
-        if err:
-            raise ValueError(err)
-        sha = dedup.sha256_file(dest)
-        dup = dedup.check_media(db, sha256=sha)
-        if dup.is_duplicate:
-            content.status = "skipped"
-            content.error = f"duplicate: {dup.reason_text}"
-            db.commit()
-            return to_dict(content)
-        normalized = video_svc.normalize_video(dest, cfg.media_path / "videos")
-        cover = ""
-        try:
-            cover = str(video_svc.extract_cover(normalized, cfg.media_path / "covers"))
-        except Exception:  # noqa: BLE001
-            pass
-        video = Video(
-            content_id=content.id, file_path=str(normalized), original_path=str(dest),
-            cover_path=cover, file_size=normalized.stat().st_size,
-            duration=info.get("duration", 0), width=info.get("width", 0),
-            height=info.get("height", 0), fps=info.get("fps", 0),
-            has_audio=info.get("has_audio", True), status="ready",
-        )
-        db.add(video)
-        db.flush()
-        import hashlib
-
-        from memes_shared.models import VideoHash
-
-        db.add(VideoHash(
-            video_id=video.id, sha256=sha, source_url_hash=hashlib.sha256(content.url.encode()).hexdigest(),
-        ))
         jobs = create_jobs_for_content(db, content, video)
         content.status = "queued" if jobs else "skipped"
         if not jobs:
             content.error = "no eligible destination accounts"
-    except Exception as e:  # noqa: BLE001
-        content.status = "failed"
-        content.error = str(e)[:1000]
     db.commit()
-    return to_dict(content)
+    d = to_dict(content)
+    d["video"] = to_dict(video) if video is not None else None
+    return d
 
 
 @router.post("/{content_id}/reprocess")
