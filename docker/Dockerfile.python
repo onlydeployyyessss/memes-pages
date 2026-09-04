@@ -19,7 +19,7 @@ RUN pip install --no-deps /app/shared
 
 COPY backend/ /app/backend/
 COPY worker/ /app/worker/
-COPY telegram-bot/ /app/telegram-bot/
+COPY telegram_bot/ /app/telegram_bot/
 COPY scripts/ /app/scripts/
 COPY docker/entrypoint.sh /app/docker/entrypoint.sh
 RUN chmod +x /app/docker/entrypoint.sh
