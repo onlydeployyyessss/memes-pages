@@ -227,6 +227,9 @@ def collect_posts_graph(profile: str, limit: int, ig_user_id: str) -> list[dict]
 
 def _json_safe(o):
     return o
+
+
+def collect_posts(profile: str, limit: int) -> list[dict]:
     instaloader = _lazy()
     L = _base_loader(instaloader)
     L.context.max_connection_attempts = 2  # fail fast instead of 429 backoff loops
