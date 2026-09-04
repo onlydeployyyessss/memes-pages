@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-ink text-gray-200 antialiased;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { @apply bg-line rounded; }
+::-webkit-scrollbar-track { @apply bg-transparent; }
+
+@layer components {
+  .panel {
+    @apply bg-panel border border-line rounded-xl;
+  }
+  .btn {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
+      transition-colors cursor-pointer select-none;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-white hover:bg-indigo-500;
+  }
+  .btn-ghost {
+    @apply btn bg-panel2 border border-line text-gray-300 hover:bg-line/60;
+  }
+  .btn-danger {
+    @apply btn bg-red-500/10 border border-red-500/30 text-red-300 hover:bg-red-500/20;
+  }
+  .btn-green {
+    @apply btn bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20;
+  }
+  .input {
+    @apply w-full bg-panel2 border border-line rounded-lg px-3 py-2 text-sm
+      text-gray-200 placeholder-gray-500 outline-none focus:border-accent;
+  }
+  .label {
+    @apply block text-xs uppercase tracking-wide text-gray-500 mb-1;
+  }
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium
+      bg-panel2 border border-line text-gray-300;
+  }
+  .th {
+    @apply text-left text-xs uppercase tracking-wide text-gray-500 font-medium px-4 py-3;
+  }
+  .td {
+    @apply px-4 py-3 text-sm text-gray-300 border-t border-line/60;
+  }
+}
