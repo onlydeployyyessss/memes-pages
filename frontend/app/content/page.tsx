@@ -118,7 +118,11 @@ export default function ContentPage() {
           <label className="text-sm text-gray-400">count:</label>
           <input type="number" min={1} max={30} className="input w-24" value={igLimit} onChange={(e) => setIgLimit(Number(e.target.value) || 10)} />
           <button className="btn-primary" disabled={uploading}>📥 Import reels</button>
+          <button type="button" className="btn-ghost" onClick={async () => {
+            try { await api.post("/instaloader/cancel", {}); setIgMsg("🛑 cancel requested…"); } catch (e: any) { setIgMsg(`🔴 ${e.message}`); }
+          }}>🛑 Cancel</button>
           {igMsg && <span className="text-sm text-gray-400 w-full">{igMsg}</span>}
+          <p className="text-xs text-gray-500 w-full">With a burner login: ~3–5 min for 10 reels. Without login Instagram slow-lanes server downloads (can hang) — the job auto-stops after 15 min.</p>
         </form>
         <details className="mt-2 text-sm text-gray-400">
           <summary className="cursor-pointer">Optional: IG login (raises limits — use a burner account, not your posting account)</summary>

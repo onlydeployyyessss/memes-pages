@@ -33,6 +33,8 @@ router = APIRouter(dependencies=[Depends(current_admin)])
 # in-memory job status (survives until api restart; results persist in the content table)
 JOB: dict = {"running": False, "profile": "", "fetched": 0, "queued": 0, "failed": 0,
              "messages": [], "started_at": "", "finished_at": ""}
+_CANCEL = False
+JOB_DEADLINE_S = 900  # hard stop: 15 minutes per job
 
 MAX_PER_JOB = 30          # hard cap per fetch job
 SLEEP_BETWEEN_S = 8.0     # pacing between downloads
@@ -112,6 +114,7 @@ def instaloader_logout(username: str):
 def _collect_video_posts(instaloader, profile: str, limit: int) -> list[dict]:
     """Newest-first video posts (metadata only — no media downloaded here)."""
     L = _make_loader(instaloader)
+    L.context.max_connection_attempts = 2  # fail fast instead of hanging on 429 backoff
     sessions = sorted(_session_dir().glob("session-*.session"))
     if sessions:
         try:
@@ -170,16 +173,24 @@ def _run_job(profile: str, limit: int, sleep_s: float):
     from memes_shared.db.session import SessionLocal
 
     instaloader = _lazy_instaloader()
+    deadline = time.time() + JOB_DEADLINE_S
     try:
         posts = _collect_video_posts(instaloader, profile, limit)
     except HTTPException as e:
         JOB.update(running=False, finished_at=datetime.now(timezone.utc).isoformat())
         JOB["messages"].append(f"🔴 {e.detail}")
         return
+    if _CANCEL:
+        JOB.update(running=False, finished_at=datetime.now(timezone.utc).isoformat())
+        JOB["messages"].append("🛑 cancelled before download phase")
+        return
 
     from backend.app.routers.content import _process_local_video
 
     for i, p in enumerate(posts):
+        if _CANCEL or time.time() > deadline:
+            JOB["messages"].append("🛑 stopped (cancel or 15-min cap)")
+            break
         if JOB["fetched"] + JOB["failed"] >= limit:
             break
         try:
@@ -243,11 +254,23 @@ def _run_job(profile: str, limit: int, sleep_s: float):
     JOB["messages"].append(f"✅ job done — fetched {JOB['fetched']}, queued {JOB['queued']}, failed {JOB['failed']}")
 
 
+@router.post("/cancel")
+def instaloader_cancel():
+    """Signal the running job to stop at the next checkpoint."""
+    global _CANCEL
+    if not JOB.get("running"):
+        return {"ok": True, "note": "no job running"}
+    _CANCEL = True
+    JOB["messages"].append("🛑 cancel requested — stopping at next checkpoint")
+    return {"ok": True, "note": "cancel signalled; the job stops at the next checkpoint (a 429-stuck fetch phase exits within ~2 min)"}
+
+
 @router.post("/fetch")
 def instaloader_fetch(body: FetchIn):
-    global JOB
+    global JOB, _CANCEL
     if JOB["running"]:
-        raise HTTPException(409, "an import job is already running — check status")
+        raise HTTPException(409, "an import job is already running — check status or cancel it")
+    _CANCEL = False
     profile = body.profile.strip().lstrip("@").split("/")[0]
     JOB = {"running": True, "profile": profile, "fetched": 0, "queued": 0, "failed": 0,
            "messages": [f"📥 importing up to {body.limit} reels from @{profile}…"],
