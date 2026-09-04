@@ -10,6 +10,7 @@ psycopg2-binary>=2.9.9
 
 # ── Config / validation ──
 pydantic>=2.9
+email-validator>=2.2
 pydantic-settings>=2.5
 
 # ── Background jobs ──

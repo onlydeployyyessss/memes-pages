@@ -15,7 +15,7 @@ class Settings(BaseSettings):
 
     # Core
     env: str = "development"
-    secret_key: str = "dev-secret-change-me"
+    secret_key: str = "dev-secret-change-me-0123456789abcdef-memes-pages"
     log_level: str = "INFO"
 
     # Database

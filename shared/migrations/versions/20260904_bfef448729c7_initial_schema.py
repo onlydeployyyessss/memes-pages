@@ -1,8 +1,8 @@
 """initial schema
 
-Revision ID: ef946693af9d
+Revision ID: bfef448729c7
 Revises: 
-Create Date: 2026-09-04 06:06:51.568114
+Create Date: 2026-09-04 06:09:48.026609
 
 """
 from __future__ import annotations
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
-revision: str = 'ef946693af9d'
+revision: str = 'bfef448729c7'
 down_revision: str | None = None
 branch_labels: str | None = None
 depends_on: str | None = None
@@ -35,10 +35,8 @@ def upgrade() -> None:
     op.create_table('app_settings',
     sa.Column('key', sa.String(length=80), nullable=False),
     sa.Column('value', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=False),
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.PrimaryKeyConstraint('key', 'id', name=op.f('pk_app_settings'))
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.PrimaryKeyConstraint('key', name=op.f('pk_app_settings'))
     )
     op.create_table('audit_logs',
     sa.Column('actor_type', sa.String(length=20), nullable=False),

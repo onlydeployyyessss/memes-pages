@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy import Boolean, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from memes_shared.db.base import Base, BaseMixin, JSONType
+from memes_shared.db.base import Base, BaseMixin, JSONType, utcnow
 
 
 class AutomationLog(Base, BaseMixin):
@@ -47,10 +47,13 @@ class AuditLog(Base, BaseMixin):
     ip: Mapped[str] = mapped_column(String(64), default="")
 
 
-class AppSetting(Base, BaseMixin):
+class AppSetting(Base):
     """Global key/value settings (rules, scheduler, trend weights, automation state)."""
 
     __tablename__ = "app_settings"
 
     key: Mapped[str] = mapped_column(String(80), primary_key=True)
     value: Mapped[dict] = mapped_column(JSONType, default=dict)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
