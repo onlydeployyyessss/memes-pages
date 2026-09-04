@@ -6,6 +6,8 @@ Content Queue → (multi-account publishing jobs)
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 from sqlalchemy.orm import Session
 
 from memes_shared.config import get_settings
@@ -179,6 +181,102 @@ def process_content(session: Session, content: DiscoveredContent) -> str:
         )
         _log_run(session, "pipeline", "failed", f"#{content.id} {type(e).__name__}: {str(e)[:300]}")
         return content.status
+
+
+def process_local_video(db: Session, content: DiscoveredContent, local_path: str):
+    """Local-file pipeline: validate → dedup → normalize → cover → store.
+
+    Returns (Video | None, error string). Used by manual uploads and the
+    InstaLoader importer; publishing jobs are created by the caller.
+    """
+    import hashlib
+    from pathlib import Path as _Path
+
+    from memes_shared.models import VideoHash
+    from memes_shared.services import dedup
+    from memes_shared.services import video as video_svc
+
+    cfg = get_settings()
+    src = _Path(local_path)
+    content.status = "processing"
+    db.flush()
+    try:
+        info, err = video_svc.validate_video(src)
+        if err:
+            content.status = "failed"
+            content.error = err
+            return None, err
+        sha = dedup.sha256_file(src)
+        dup = dedup.check_media(db, sha256=sha)
+        if dup.is_duplicate:
+            content.status = "skipped"
+            content.error = f"duplicate: {dup.reason_text}"
+            return None, content.error
+        normalized = video_svc.normalize_video(src, cfg.media_path / "videos")
+        cover = ""
+        try:
+            cover = str(video_svc.extract_cover(normalized, cfg.media_path / "covers"))
+        except Exception:
+            pass
+        video = Video(
+            content_id=content.id, file_path=str(normalized), original_path=str(src),
+            cover_path=cover, file_size=normalized.stat().st_size,
+            duration=info.get("duration", 0), width=info.get("width", 0),
+            height=info.get("height", 0), fps=info.get("fps", 0),
+            has_audio=info.get("has_audio", True), status="ready",
+        )
+        db.add(video)
+        db.flush()
+        db.add(VideoHash(
+            video_id=video.id, sha256=sha,
+            source_url_hash=hashlib.sha256(content.url.encode()).hexdigest(),
+        ))
+        ingest_media_files([normalized] + ([Path(cover)] if cover else []))
+        return video, ""
+    except Exception as e:
+        content.status = "failed"
+        content.error = str(e)[:1000]
+        return None, content.error
+
+
+def ingest_media_files(paths) -> int:
+    """On the worker: push processed media to the api's public media store.
+
+    No-op unless MEMES_API_INTERNAL_URL is configured (worker-only). Keeps
+    MEMES_PUBLIC_MEDIA_BASE_URL URLs valid for Instagram/YouTube fetching.
+    """
+    import httpx as _httpx
+
+    cfg = get_settings()
+    if not cfg.api_internal_url:
+        return 0
+    base = cfg.media_path.resolve()
+    ok = 0
+    try:
+        with _httpx.Client(timeout=120.0) as client:
+            for p in paths:
+                p = Path(p)
+                rp = p.resolve()
+                if base not in rp.parents:
+                    continue
+                rel = rp.relative_to(base).as_posix()
+                try:
+                    with open(rp, "rb") as f:
+                        r = client.post(
+                            f"{cfg.api_internal_url.rstrip('/')}/api/v1/media/ingest",
+                            files={"file": (rp.name, f)},
+                            data={"rel_path": rel},
+                            headers={"X-Ingest-Key": cfg.secret_key},
+                        )
+                    if r.status_code < 400:
+                        ok += 1
+                    else:
+                        log.warning("media ingest %s → HTTP %s", rel, r.status_code)
+                except Exception as e:
+                    log.warning("media ingest %s failed: %s", rel, e)
+    except Exception as e:
+        log.warning("media ingest error: %s", e)
+    return ok
 
 
 def process_pending(session: Session, limit: int = 10) -> dict:

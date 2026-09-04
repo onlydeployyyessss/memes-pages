@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     # Media
     media_dir: str = "./media"
     public_media_base_url: str = ""
+    # Worker → api internal URL for media ingest (worker-only setting)
+    api_internal_url: str = ""
 
     # Encryption key for destination-account credentials at rest
     credential_encryption_key: str = ""

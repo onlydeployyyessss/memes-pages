@@ -110,6 +110,22 @@ def job_reports():
             automation.record_run(s, "reports", f"generated: {', '.join(produced)}")
 
 
+def job_watchlist():
+    """Auto-import reels from configured Instagram profiles (due entries only)."""
+    from memes_shared.services import instaloader_service as ig
+
+    try:
+        results = ig.run_due_watchlist()
+    except Exception as e:
+        log.warning("watchlist run failed: %s", e)
+        return
+    for r in results:
+        msg = f"watchlist @{r['profile']}: fetched {r['fetched']}, queued {r['queued']}, failed {r['failed']}"
+        log.info("📥 %s", msg)
+        with get_session() as s:
+            automation.record_run(s, "instaloader_watchlist", msg)
+
+
 def job_cleanup():
     """Remove temp files older than 12h + prune AI usage logs older than 30d."""
     from datetime import timedelta
@@ -171,6 +187,8 @@ def main() -> None:
     scheduler.add_job(job_reports, CronTrigger(hour=21, minute=5), id="reports",
                       max_instances=1, coalesce=True)
     scheduler.add_job(job_cleanup, CronTrigger(hour=4, minute=30), id="cleanup",
+                      max_instances=1, coalesce=True)
+    scheduler.add_job(job_watchlist, IntervalTrigger(minutes=30), id="instaloader_watchlist",
                       max_instances=1, coalesce=True)
 
     def _shutdown(signum, frame):

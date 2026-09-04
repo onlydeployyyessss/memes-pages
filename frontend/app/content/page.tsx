@@ -20,6 +20,17 @@ export default function ContentPage() {
   const [igUser, setIgUser] = useState("");
   const [igPass, setIgPass] = useState("");
   const [igSessions, setIgSessions] = useState<string[]>([]);
+  const [watchlist, setWatchlist] = useState<any[]>([]);
+  const [wlProfile, setWlProfile] = useState("");
+  const [wlLimit, setWlLimit] = useState(10);
+  const [wlEvery, setWlEvery] = useState(12);
+
+  async function loadWatchlist() {
+    try {
+      const st = await api.get("/instaloader/watchlist");
+      setWatchlist(st.entries ?? []);
+    } catch { /* ignore */ }
+  }
 
   async function loadIgStatus() {
     try {
@@ -27,7 +38,7 @@ export default function ContentPage() {
       setIgSessions(st.sessions ?? []);
     } catch { /* ignore */ }
   }
-  useEffect(() => { loadIgStatus(); }, []);
+  useEffect(() => { loadIgStatus(); loadWatchlist(); }, []);
 
   async function igLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -40,6 +51,28 @@ export default function ContentPage() {
     } catch (err: any) {
       setIgMsg(`🔴 ${err.message}`);
     }
+  }
+
+  async function wlAdd(e: React.FormEvent) {
+    e.preventDefault();
+    if (!wlProfile.trim()) return;
+    try {
+      await api.post("/instaloader/watchlist", { profile: wlProfile.trim(), limit: wlLimit, interval_hours: wlEvery });
+      setWlProfile("");
+      loadWatchlist();
+    } catch (err: any) { setIgMsg(`🔴 ${err.message}`); }
+  }
+  async function wlToggle(entry: any) {
+    const { getToken } = await import("@/lib/api");
+    await fetch(`/api/v1/instaloader/watchlist/${entry.profile}?enabled=${!entry.enabled}`, {
+      method: "PATCH", headers: { Authorization: `Bearer ${getToken()}` } });
+    loadWatchlist();
+  }
+  async function wlRemove(profile: string) {
+    const { getToken } = await import("@/lib/api");
+    await fetch(`/api/v1/instaloader/watchlist/${profile}`, {
+      method: "DELETE", headers: { Authorization: `Bearer ${getToken()}` } });
+    loadWatchlist();
   }
 
   async function igFetch(e: React.FormEvent) {
@@ -134,6 +167,30 @@ export default function ContentPage() {
           </form>
           <p className="mt-1 text-xs">Password is used once and never stored. Only import content you own or have permission to re-post.</p>
         </details>
+
+        <div className="mt-4 border-t border-gray-800 pt-3">
+          <div className="font-semibold mb-2">🕒 Auto-import watchlist (runs every 12 h by default)</div>
+          <form onSubmit={wlAdd} className="flex flex-wrap items-center gap-2">
+            <input className="input w-auto" placeholder="profile to watch (e.g. lgh.stsh)" value={wlProfile} onChange={(e) => setWlProfile(e.target.value)} />
+            <label className="text-sm text-gray-400">newest:</label>
+            <input type="number" min={1} max={30} className="input w-20" value={wlLimit} onChange={(e) => setWlLimit(Number(e.target.value) || 10)} />
+            <label className="text-sm text-gray-400">every:</label>
+            <input type="number" min={1} max={168} className="input w-20" value={wlEvery} onChange={(e) => setWlEvery(Number(e.target.value) || 12)} />
+            <span className="text-sm text-gray-400">h</span>
+            <button className="btn-ghost">➕ Watch profile</button>
+          </form>
+          <ul className="mt-2 space-y-1">
+            {watchlist.map((w) => (
+              <li key={w.profile} className="flex items-center gap-3 text-sm">
+                <span className={w.enabled ? "text-gray-200" : "text-gray-500 line-through"}>@{w.profile}</span>
+                <span className="text-gray-500">newest {w.limit} · every {w.interval_hours}h · {w.last_run ? `last: ${new Date(w.last_run).toLocaleString()}` : "never"}</span>
+                <button className="btn-ghost !py-0.5 !px-2 text-xs" onClick={() => wlToggle(w)}>{w.enabled ? "pause" : "resume"}</button>
+                <button className="btn-ghost !py-0.5 !px-2 text-xs" onClick={() => wlRemove(w.profile)}>remove</button>
+              </li>
+            ))}
+            {watchlist.length === 0 && <li className="text-gray-500 text-sm">No profiles watched yet — add one above and reels import automatically.</li>}
+          </ul>
+        </div>
       </div>
 
       <form onSubmit={upload} className="panel p-4 mb-4 flex flex-wrap items-center gap-3">

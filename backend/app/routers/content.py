@@ -54,56 +54,10 @@ def get_content(content_id: int, db: Session = Depends(get_db)):
 
 
 def _process_local_video(db: Session, content: DiscoveredContent, local_path: str):
-    """Shared upload pipeline: validate → dedup → normalize → cover → store.
+    """Thin wrapper — implementation lives in the shared pipeline."""
+    from memes_shared.services.pipeline import process_local_video
 
-    Returns (Video | None, error string). On success the content row gets its
-    publishing jobs created by the caller.
-    """
-    import hashlib
-    from pathlib import Path as _Path
-
-    from memes_shared.models import VideoHash
-    from memes_shared.services import dedup
-    from memes_shared.services import video as video_svc
-
-    cfg = get_settings()
-    src = _Path(local_path)
-    content.status = "processing"
-    db.flush()
-    try:
-        info, err = video_svc.validate_video(src)
-        if err:
-            return None, err
-        sha = dedup.sha256_file(src)
-        dup = dedup.check_media(db, sha256=sha)
-        if dup.is_duplicate:
-            content.status = "skipped"
-            content.error = f"duplicate: {dup.reason_text}"
-            return None, content.error
-        normalized = video_svc.normalize_video(src, cfg.media_path / "videos")
-        cover = ""
-        try:
-            cover = str(video_svc.extract_cover(normalized, cfg.media_path / "covers"))
-        except Exception:
-            pass
-        video = Video(
-            content_id=content.id, file_path=str(normalized), original_path=str(src),
-            cover_path=cover, file_size=normalized.stat().st_size,
-            duration=info.get("duration", 0), width=info.get("width", 0),
-            height=info.get("height", 0), fps=info.get("fps", 0),
-            has_audio=info.get("has_audio", True), status="ready",
-        )
-        db.add(video)
-        db.flush()
-        db.add(VideoHash(
-            video_id=video.id, sha256=sha,
-            source_url_hash=hashlib.sha256(content.url.encode()).hexdigest(),
-        ))
-        return video, ""
-    except Exception as e:
-        content.status = "failed"
-        content.error = str(e)[:1000]
-        return None, content.error
+    return process_local_video(db, content, local_path)
 
 
 @router.post("/upload", status_code=201)
