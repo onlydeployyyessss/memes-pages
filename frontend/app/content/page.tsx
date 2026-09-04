@@ -13,23 +13,33 @@ export default function ContentPage() {
     `/content?limit=60${status ? `&status=${status}` : ""}`
   );
   const fileRef = useRef<HTMLInputElement>(null);
+  const [filesCount, setFilesCount] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState<string | null>(null);
 
   async function upload(e: React.FormEvent) {
     e.preventDefault();
-    const file = fileRef.current?.files?.[0];
-    if (!file) return;
+    const files = Array.from(fileRef.current?.files ?? []);
+    if (!files.length) return;
     setUploading(true);
     setUploadMsg(null);
+    const results: string[] = [];
     try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await api.upload("/content/upload", form);
-      setUploadMsg(`${res.status === "queued" ? "🟢" : res.status === "skipped" ? "⚪" : "🔴"} Upload processed: ${res.status}${res.error ? ` — ${res.error}` : ""}`);
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        setUploadMsg(`⏳ Uploading ${i + 1}/${files.length}: ${f.name}…`);
+        try {
+          const form = new FormData();
+          form.append("file", f);
+          const res = await api.upload("/content/upload", form);
+          const icon = res.status === "queued" ? "🟢" : res.status === "skipped" ? "⚪" : "🔴";
+          results.push(`${icon} ${f.name}: ${res.status}${res.error ? ` — ${res.error}` : ""}`);
+        } catch (err: any) {
+          results.push(`🔴 ${f.name}: ${err.message}`);
+        }
+      }
+      setUploadMsg(results.join("  ·  "));
       reload();
-    } catch (err: any) {
-      setUploadMsg(`🔴 ${err.message}`);
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -51,9 +61,9 @@ export default function ContentPage() {
       {error && <ErrorNote msg={error} />}
 
       <form onSubmit={upload} className="panel p-4 mb-4 flex flex-wrap items-center gap-3">
-        <input ref={fileRef} type="file" accept="video/*" className="text-sm text-gray-400 file:mr-3 file:btn-ghost" />
+        <input ref={fileRef} type="file" accept="video/*" multiple onChange={(e) => setFilesCount(e.target.files?.length ?? 0)} className="text-sm text-gray-400 file:mr-3 file:btn-ghost" />
         <button className="btn-primary" disabled={uploading}>
-          {uploading ? "Processing…" : "⬆️ Upload video"}
+          {uploading ? "Processing…" : filesCount > 1 ? `⬆️ Upload ${filesCount} videos` : "⬆️ Upload video"}
         </button>
         {uploadMsg && <span className="text-sm text-gray-400">{uploadMsg}</span>}
       </form>
