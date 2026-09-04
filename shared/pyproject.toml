@@ -1,0 +1,22 @@
+[project]
+name = "memes-shared"
+version = "1.0.0"
+description = "Memes Pages — shared domain models, services and utilities"
+requires-python = ">=3.11"
+dependencies = [
+    "sqlalchemy>=2.0.35",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.5",
+    "httpx>=0.27",
+    "PyJWT>=2.9",
+    "bcrypt>=4.2",
+    "Pillow>=10.4",
+    "feedparser>=6.0.11",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["memes_shared*"]

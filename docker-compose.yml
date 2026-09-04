@@ -1,0 +1,106 @@
+services:
+  # ── Infrastructure ────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-memes}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-memes}
+      POSTGRES_DB: ${POSTGRES_DB:-memes_pages}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-memes} -d ${POSTGRES_DB:-memes_pages}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── Application services ──────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.python
+    restart: unless-stopped
+    command: >
+      sh -c "alembic -c shared/alembic.ini upgrade head &&
+             python -m scripts.seed_admin &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --app-dir backend"
+    env_file: .env
+    environment:
+      MEMES_DATABASE_URL: postgresql://memes:memes@postgres:5432/memes_pages
+      MEMES_REDIS_URL: redis://redis:6379/0
+    volumes:
+      - mediadata:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.python
+    restart: unless-stopped
+    command: ["python", "-m", "worker.main"]
+    env_file: .env
+    environment:
+      MEMES_DATABASE_URL: postgresql://memes:memes@postgres:5432/memes_pages
+      MEMES_REDIS_URL: redis://redis:6379/0
+    volumes:
+      - mediadata:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.python
+    restart: unless-stopped
+    command: ["python", "-m", "telegram_bot.bot"]
+    env_file: .env
+    environment:
+      MEMES_DATABASE_URL: postgresql://memes:memes@postgres:5432/memes_pages
+      MEMES_REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    restart: unless-stopped
+    environment:
+      API_INTERNAL_URL: http://backend:8000
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  redisdata:
+  mediadata:
