@@ -9,6 +9,10 @@ set -e
 
 ROLE="${ROLE:-api}"
 
+# backend.app.* imports expect the repo root on sys.path (uvicorn --app-dir
+# puts only /app/backend there; PYTHONPATH restores /app).
+export PYTHONPATH="/app${PYTHONPATH:+:${PYTHONPATH}}"
+
 case "$ROLE" in
   worker)
     alembic -c shared/alembic.ini upgrade head
