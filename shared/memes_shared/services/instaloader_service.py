@@ -196,8 +196,27 @@ def collect_posts_graph(profile: str, limit: int, ig_user_id: str) -> list[dict]
         f"business_discovery.username({profile}){{followers_count,media.limit({limit}){{id,media_type,media_product_type,media_url,permalink,caption,timestamp}}}}"
     )
     with httpx.Client(timeout=30.0) as client:
+        # discover the FB-side IG node ourselves (IG-hosted ids don't exist on graph.facebook.com)
+        node = ""
+        try:
+            rr = client.get(
+                "https://graph.facebook.com/v21.0/me/accounts",
+                params={"fields": "instagram_business_account{id}", "access_token": token},
+            )
+            for page in (rr.json() or {}).get("data", []):
+                igacct = page.get("instagram_business_account") or {}
+                if igacct.get("id"):
+                    node = igacct["id"]
+                    break
+        except Exception:
+            node = ""
+        if not node:
+            raise ValueError(
+                "no Instagram account linked to your Facebook Page yet — open Meta Business Suite → Settings → "
+                "Linked accounts → Instagram → connect your IG account, then the next import just works"
+            )
         r = client.get(
-            f"https://graph.facebook.com/v21.0/{ig_user_id}",
+            f"https://graph.facebook.com/v21.0/{node}",
             params={"fields": fields, "access_token": token},
         )
         body = _json_safe(r.json())
